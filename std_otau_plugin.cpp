@@ -130,7 +130,7 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
 {
     deCONZ::ApsController *apsCtrl = deCONZ::ApsController::instance();
-    if (!apsCtrl || (apsCtrl->getParameter(deCONZ::ParamOtauActive) == 0))
+    if (!apsCtrl)
     {
         return;
     }
@@ -879,7 +879,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
         node->setHasData(false);
         node->setPermitUpdate(false);
 
-        if (!otauIsActive())
+        if (otauIsActive())
         {
             checkForUpdateImageImage(node);
         }
