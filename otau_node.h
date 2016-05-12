@@ -111,7 +111,7 @@ public:
     OtauModel *model;
 
     // TODO: getter and setter
-    uint8_t apsRequestId;
+    uint16_t apsRequestId;
     uint8_t zclCommandId; // last send ZCL command id
     uint8_t endpoint;
     uint8_t reqSequenceNumber;

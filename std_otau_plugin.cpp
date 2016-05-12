@@ -43,6 +43,7 @@
 #define MAX_IMG_PAGE_REQ_RETRY   12
 #define MAX_IMG_BLOCK_RSP_RETRY   10
 #define WAIT_NEXT_REQUEST_TIMEOUT 8000
+#define INVALID_APS_REQ_ID (0xff + 1) // request ids are 8-bit
 
 #define OTAU_IMAGE_NOTIFY_CLID                 0x0201
 #define OTAU_QUERY_NEXT_IMAGE_REQUEST_CLID     0x0202
@@ -255,19 +256,23 @@ void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
                 return;
             }
 
-            // wait for next query
-            if (conf.status() != deCONZ::ApsSuccessStatus)
+            if (node->apsRequestId == INVALID_APS_REQ_ID)
+            { }
+            else if (node->apsRequestId == conf.id())
             {
-                DBG_Printf(DBG_INFO, "otau aps conf failed status 0x%02X\n", conf.status());
-                node->setState(OtauNode::NodeError);
-            }
-            else
-            {
-                node->refreshTimeout();
-            }
+                node->apsRequestId = INVALID_APS_REQ_ID;
 
-            if (node->apsRequestId == conf.id())
-            {
+                // wait for next query
+                if (conf.status() != deCONZ::ApsSuccessStatus)
+                {
+                    DBG_Printf(DBG_INFO, "otau aps conf failed status 0x%02X\n", conf.status());
+                    node->setState(OtauNode::NodeError);
+                }
+                else
+                {
+                    node->refreshTimeout();
+                }
+
                 if (node->lastZclCmd() == OTAU_IMAGE_PAGE_REQUEST_CMD_ID)
                 {
                     //imagePageResponse(node);
@@ -647,7 +652,7 @@ bool StdOtauPlugin::broadcastImageNotify()
     ImageNotifyReq notf;
 
     notf.radius = 0;
-    notf.addr.setNwk(0xFFFF);
+    notf.addr.setNwk(deCONZ::BroadcastRxOnWhenIdle);
     notf.addrMode = deCONZ::ApsNwkAddress;
     notf.dstEndpoint = 0xFF; // broadcast endpoint
 
@@ -914,7 +919,7 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
     req.setProfileId(node->profileId);
     req.setDstEndpoint(node->endpoint);
     req.setClusterId(OTAU_CLUSTER_ID);
-    req.dstAddress() = node->address();
+    req.dstAddress().setExt(node->address().ext());
     req.setDstAddressMode(deCONZ::ApsExtAddress);
     req.setSrcEndpoint(m_srcEndpoint);
     req.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
@@ -936,12 +941,15 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_ABORT;
             DBG_Printf(DBG_INFO, "Send query next image response: OTAU_ABORT\n");
         }
+        else if (!otauIsActive())
+        {
+            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
+            DBG_Printf(DBG_INFO, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");
+        }
         else if (otauIsActive() &&  (m_activityAddress.ext() != node->address().ext()))
         {
             DBG_Printf(DBG_INFO, "Busy, don't answer and let node run in timeout\n");
             return true;
-            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-            DBG_Printf(DBG_INFO, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");
         }
         else if (node->manufacturerId == VENDOR_DDEL &&
                  node->imageType() == IMG_TYPE_FLS_PP3_H3 &&
