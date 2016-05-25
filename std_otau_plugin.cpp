@@ -965,6 +965,7 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
         }
         else if (node->manufacturerId == VENDOR_DDEL &&
                  node->imageType() == IMG_TYPE_FLS_PP3_H3 &&
+                 node->softwareVersion() >= 0x20000053 &&
                  node->softwareVersion() <= 0x20000054)
         {
             // FIXME workaround to prevent update FLS-H lp
