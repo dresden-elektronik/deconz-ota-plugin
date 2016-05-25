@@ -579,6 +579,18 @@ void StdOtauPlugin::markOtauActivity(const deCONZ::Address &address)
     }
 }
 
+/*! Checks if OTAU is enabled.
+ */
+bool StdOtauPlugin::isOtauEnabled()
+{
+    deCONZ::ApsController *apsCtrl = deCONZ::ApsController::instance();
+    if (apsCtrl && apsCtrl->getParameter(deCONZ::ParamOtauActive) != 0)
+    {
+        return true;
+    }
+    return false;
+}
+
 /*! Sends a image notify request.
     \param notf - the request parameters
     \return true on success false otherwise
@@ -879,7 +891,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
         node->setHasData(false);
         node->setPermitUpdate(false);
 
-        if (otauIsActive())
+        if (isOtauEnabled())
         {
             checkForUpdateImageImage(node);
         }
@@ -941,7 +953,7 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_ABORT;
             DBG_Printf(DBG_INFO, "Send query next image response: OTAU_ABORT\n");
         }
-        else if (!otauIsActive())
+        else if (!isOtauEnabled())
         {
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
             DBG_Printf(DBG_INFO, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");

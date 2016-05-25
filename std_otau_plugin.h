@@ -88,6 +88,7 @@ public Q_SLOTS:
     void activityTimerFired();
     void markOtauActivity(const deCONZ::Address &address);
     bool otauIsActive() { return m_activityCounter > 0; }
+    bool isOtauEnabled();
 
 Q_SIGNALS:
     void stateChanged();
