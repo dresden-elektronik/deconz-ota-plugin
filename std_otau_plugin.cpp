@@ -18,6 +18,7 @@
 #define IMG_TYPE_FLS_PP3_H3  0x0000
 #define IMG_TYPE_FLS_NB      0x0002
 #define IMG_TYPE_FLS_A2      0x0004
+#define IMG_TYPE_FLS_H3      0x0008
 
 #define MAX_RADIUS          0
 #define MAX_ASDU_SIZE 49
@@ -693,15 +694,21 @@ bool StdOtauPlugin::unicastImageNotify(const deCONZ::Address &addr)
         {
             if (node->imageType() == IMG_TYPE_FLS_PP3_H3)
             {
-                return false;
+                if (node->softwareVersion() < 0x201000C4)
+                {
+                    return false;
+                }
             }
             else if (node->imageType() == IMG_TYPE_FLS_A2)
             {
-                return false;
+                if (node->softwareVersion() < 0x201000C4)
+                {
+                    return false;
+                }
             }
             else if (node->imageType() == IMG_TYPE_FLS_NB)
             {
-                if (node->softwareVersion() > 0x200000C4 && node->softwareVersion() < 0x200000C8)
+                if (node->softwareVersion() < 0x200000C8)
                 {
                     return false;
                 }
