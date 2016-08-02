@@ -879,21 +879,18 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     DBG_Printf(DBG_INFO, "otau query next img req: %s mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
                qPrintable(ind.srcAddress().toStringExt()), node->manufacturerId, node->imageType(), node->softwareVersion());
 
-    // check for image after first OTAU_NO_IMAGE_AVAILABLE is returned
+    // check for image
     if (!node->hasData())
     {
         node->file.subElements.clear();
         node->setHasData(false);
         node->setPermitUpdate(false);
-
-        if (otauIsActive())
-        {
-            checkForUpdateImageImage(node);
-        }
+        checkForUpdateImageImage(node);
     }
 
     if (node->hasData())
     {
+        markOtauActivity(node->address());
         node->setPermitUpdate(true);
     }
 
