@@ -146,6 +146,11 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
         return;
     }
 
+    if (apsCtrl->getParameter(deCONZ::ParamOtauActive) == 0)
+    {
+        return;
+    }
+
     deCONZ::ZclFrame zclFrame;
 
     QDataStream stream(ind.asdu());
@@ -945,15 +950,15 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_ABORT;
             DBG_Printf(DBG_INFO, "Send query next image response: OTAU_ABORT\n");
         }
-        else if (!otauIsActive())
-        {
-            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-            DBG_Printf(DBG_INFO, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");
-        }
-        else if (otauIsActive() &&  (m_activityAddress.ext() != node->address().ext()))
+//        else if (!otauIsActive())
+//        {
+//            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
+//            DBG_Printf(DBG_INFO, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");
+//        }
+        else if (otauIsActive() && (m_activityAddress.ext() != node->address().ext()))
         {
             DBG_Printf(DBG_INFO, "Busy, don't answer and let node run in timeout\n");
-            return true;
+            return false;
         }
         else if (node->manufacturerId == VENDOR_DDEL &&
                  node->imageType() == IMG_TYPE_FLS_PP3_H3 &&
