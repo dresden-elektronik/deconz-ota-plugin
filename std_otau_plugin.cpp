@@ -879,7 +879,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     DBG_Printf(DBG_INFO, "otau query next img req: %s mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
                qPrintable(ind.srcAddress().toStringExt()), node->manufacturerId, node->imageType(), node->softwareVersion());
 
-    if (apsCtrl->getParameter(deCONZ::ParamOtauActive) == 0)
+    if (deCONZ::ApsController::instance()->getParameter(deCONZ::ParamOtauActive) == 0)
     {
         return;
     }
