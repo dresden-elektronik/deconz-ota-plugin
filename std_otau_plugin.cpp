@@ -571,12 +571,15 @@ void StdOtauPlugin::activityTimerFired()
 
 void StdOtauPlugin::markOtauActivity(const deCONZ::Address &address)
 {
-    m_activityCounter = MAX_ACTIVITY;
-    m_activityAddress = address;
-
-    if (!m_activityTimer->isActive())
+    if (0 == m_activityCounter || !m_activityTimer->isActive() || address.ext() == m_activityAddress.ext())
     {
-        m_activityTimer->start(ACTIVITY_TIMER_DELAY);
+        m_activityCounter = MAX_ACTIVITY;
+        m_activityAddress = address;
+
+        if (!m_activityTimer->isActive())
+        {
+            m_activityTimer->start(ACTIVITY_TIMER_DELAY);
+        }
     }
 }
 
