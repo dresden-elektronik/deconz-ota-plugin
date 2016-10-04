@@ -339,7 +339,7 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node, const QString &path
 
     if (!dir.exists())
     {
-        DBG_Printf(DBG_INFO, "Otau image path does not exist: %s\n", qPrintable(m_imgPath));
+        DBG_Printf(DBG_INFO, "Otau image path does not exist: %s\n", qPrintable(path));
         return false;
     }
 
@@ -399,7 +399,7 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node, const QString &path
 
     if (!updateFile.isEmpty())
     {
-        updateFile.prepend(m_imgPath + "/");
+        updateFile.prepend(path + "/");
         OtauFileLoader ld;
 
         if (ld.readFile(updateFile, node->file))
