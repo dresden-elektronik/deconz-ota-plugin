@@ -314,8 +314,9 @@ void StdOtauPlugin::nodeEvent(const deCONZ::NodeEvent &event)
     example: 113D-AB12-1F010400-FLS-RGB.zigbee
 
     \param node - the node for which the check will be done
+    \param path - the path to look for .zigbee files
  */
-bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node)
+bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node, const QString &path)
 {
     deCONZ::ApsController *apsCtrl = deCONZ::ApsController::instance();
     if (!apsCtrl)
@@ -334,7 +335,7 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node)
     uint16_t imageType;
     uint16_t manufacturerId;
     QString updateFile = "";
-    QDir dir(m_imgPath);
+    QDir dir(path);
 
     if (!dir.exists())
     {
@@ -411,7 +412,6 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node)
             node->setHasData(false);
             DBG_Printf(DBG_INFO, "Found invalid update file %s\n", qPrintable(updateFile));
         }
-
     }
 
     return false;
@@ -893,7 +893,16 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
         node->file.subElements.clear();
         node->setHasData(false);
         node->setPermitUpdate(false);
-        checkForUpdateImageImage(node);
+
+        if (!checkForUpdateImageImage(node, m_imgPath))
+        {
+            QString secondaryPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau";
+
+            if (!checkForUpdateImageImage(node, secondaryPath))
+            {
+
+            }
+        }
     }
 
     if (node->hasData())
