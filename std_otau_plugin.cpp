@@ -37,10 +37,10 @@
 #define MAX_RESPONSE_SPACING 500
 #define DEFAULT_UPGRADE_TIME 5
 #define CLEANUP_TIMER_DELAY  (3 * 60 * 1000)
-#define CLEANUP_DELAY        (10 * 60 * 1000)
+#define CLEANUP_DELAY        (30 * 60 * 1000)
 #define IMAGE_PAGE_TIMER_DELAY 5
 #define ACTIVITY_TIMER_DELAY  1000
-#define MAX_ACTIVITY   5 // hits 0 after 5 seconds
+#define MAX_ACTIVITY   120 // hits 0 after 5 seconds
 #define MAX_IMG_PAGE_REQ_RETRY   12
 #define MAX_IMG_BLOCK_RSP_RETRY   10
 #define WAIT_NEXT_REQUEST_TIMEOUT 8000
@@ -907,7 +907,6 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
 
     if (node->hasData())
     {
-        markOtauActivity(node->address());
         node->setPermitUpdate(true);
     }
 
@@ -991,6 +990,10 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << node->file.totalImageSize;
 
             markOtauActivity(node->address());
+            if (node->address().ext() == m_activityAddress.ext())
+            {
+                m_activityCounter = 5;
+            }
         }
         else
         {
@@ -1029,6 +1032,11 @@ void StdOtauPlugin::imageBlockRequest(const deCONZ::ApsDataIndication &ind, cons
     }
 
     markOtauActivity(node->address());
+
+    if (otauIsActive() && node->address().ext() != m_activityAddress.ext())
+    {
+        return; // ignore
+    }
 
     node->refreshTimeout();
     invalidateUpdateEndRequest(node);
@@ -1248,6 +1256,11 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
 
     markOtauActivity(node->address());
 
+    if (otauIsActive() && node->address().ext() != m_activityAddress.ext())
+    {
+        return; // ignore
+    }
+
     deCONZ::ApsController *apsCtrl = deCONZ::ApsController::instance();
     if (!apsCtrl)
     {
@@ -1450,6 +1463,12 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
     DBG_Printf(DBG_INFO, "otau upgrade end req: status: 0x%02X, fwVersion:0x%08X, imgType: 0x%04X\n", node->upgradeEndReq.status, node->upgradeEndReq.fileVersion, node->upgradeEndReq.imageType);
 
     node->setState(OtauNode::NodeIdle);
+
+
+    if (m_activityAddress.ext() == node->address().ext())
+    {
+        m_activityCounter = 1;
+    }
 
     if (node->upgradeEndReq.status == OTAU_SUCCESS)
     {
