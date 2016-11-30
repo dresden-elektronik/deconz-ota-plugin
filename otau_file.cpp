@@ -12,7 +12,7 @@ OtauFile::OtauFile()
    upgradeFileId = 0x0BEEF11E;
    headerVersion = 0x0100;
    headerLength = 0;
-   headerFieldControl = 0x00;
+   headerFieldControl = 0x0000;
    manufacturerCode = 0x1135;
    imageType = 0;
    fileVersion = 0;
@@ -25,7 +25,12 @@ OtauFile::OtauFile()
  */
 QByteArray OtauFile::toArray()
 {
-    headerLength = 56; // fixed length
+    headerLength = MANDATORY_HEADER_LENGTH; // fixed length
+
+    if (headerFieldControl & OF_FC_SECURITY_CREDENTIAL_VERSION)
+    {
+        headerLength += 1;
+    }
 
     if (headerFieldControl & OF_FC_DEVICE_SPECIFIC)
     {
@@ -36,11 +41,6 @@ QByteArray OtauFile::toArray()
     {
         headerLength += 2; // min hw version
         headerLength += 2; // max hw version
-    }
-
-    if (headerFieldControl & OF_FC_SECURITY_CREDENTIAL_VERSION)
-    {
-        headerLength += 1;
     }
 
     totalImageSize = headerLength;
@@ -75,6 +75,22 @@ QByteArray OtauFile::toArray()
 
     stream << totalImageSize;
 
+    if (headerFieldControl & OF_FC_SECURITY_CREDENTIAL_VERSION)
+    {
+        stream << securityCredentialVersion;
+    }
+
+    if (headerFieldControl & OF_FC_DEVICE_SPECIFIC)
+    {
+        stream << upgradeFileDestination;
+    }
+
+    if (headerFieldControl & OF_FC_HARDWARE_VERSION)
+    {
+        stream << minHardwareVersion;
+        stream << maxHardwareVersion;
+    }
+
     // append tags
     {
         std::list<SubElement>::iterator it = subElements.begin();
@@ -103,6 +119,7 @@ bool OtauFile::fromArray(const QByteArray &arr)
         return false;
     }
 
+    uint processedLength = 0;
     QDataStream stream(arr);
     stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -126,12 +143,33 @@ bool OtauFile::fromArray(const QByteArray &arr)
     }
 
     stream >> totalImageSize;
+    processedLength = MANDATORY_HEADER_LENGTH;
+
+    if (headerFieldControl & OF_FC_SECURITY_CREDENTIAL_VERSION)
+    {
+        stream >> securityCredentialVersion;
+        processedLength += 1;
+    }
+
+    if (headerFieldControl & OF_FC_DEVICE_SPECIFIC)
+    {
+        stream >> upgradeFileDestination;
+        processedLength += 8;
+    }
+
+    if (headerFieldControl & OF_FC_HARDWARE_VERSION)
+    {
+        stream >> minHardwareVersion;
+        stream >> maxHardwareVersion;
+        processedLength += 4;
+    }
 
     // discard optional fields of header
-    for (quint16 i = 0; i < (headerLength - MANDATORY_HEADER_LENGTH); i++)
+    for (quint16 i = 0; headerLength > processedLength; i++)
     {
         quint8 dummy;
         stream >> dummy;
+        processedLength++;
     }
 
     // read tags
@@ -168,8 +206,9 @@ bool OtauFile::fromArray(const QByteArray &arr)
         else
         {
             qDebug() << "sub element size does not match real size";
+            return false;
         }
     }
 
-    return true;
+    return (stream.status() != QDataStream::ReadPastEnd);
 }

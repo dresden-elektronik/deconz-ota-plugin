@@ -7,9 +7,9 @@
 #include <list>
 
 //!< Header field control bits
-#define OF_FC_SECURITY_CREDENTIAL_VERSION 0x01
-#define OF_FC_DEVICE_SPECIFIC             0x02
-#define OF_FC_HARDWARE_VERSION            0x04
+#define OF_FC_SECURITY_CREDENTIAL_VERSION 0x0001
+#define OF_FC_DEVICE_SPECIFIC             0x0002
+#define OF_FC_HARDWARE_VERSION            0x0004
 
 #define TAG_UPGRADE_IMAGE 0x0000
 
@@ -46,6 +46,7 @@ struct OtauFile
     uint16_t headerLength;
     uint16_t headerFieldControl;
     uint16_t manufacturerCode;
+
     /*!
         Image Type
 
@@ -79,7 +80,7 @@ struct OtauFile
          0x02 SE 2.0
      */
     uint8_t securityCredentialVersion;
-    uint64_t upgradeFileDestination;
+    quint64 upgradeFileDestination;
     uint16_t minHardwareVersion;
     uint16_t maxHardwareVersion;
 
