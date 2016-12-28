@@ -1530,6 +1530,11 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
                              deCONZ::ZclFCDirectionServerToClient |
                              deCONZ::ZclFCDisableDefaultResponse);
 
+    if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
+    {
+        upgradeTime = 0xffff; // use DE Cluster for restart [1]
+    }
+
     { // ZCL payload
         QDataStream stream(&zclFrame.payload(), QIODevice::WriteOnly);
         stream.setByteOrder(QDataStream::LittleEndian);
@@ -1550,14 +1555,61 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
         zclFrame.writeToStream(stream);
     }
 
+    bool ret = false;
+
     if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == 0)
     {
         node->apsRequestId = req.id();
         node->zclCommandId = zclFrame.commandId();
-        return true;
+        ret = true;
     }
 
-    return false;
+    // [1] send delayed DE cluster WDT Reset command
+    if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
+    {
+        deCONZ::ApsDataRequest req2;
+        deCONZ::ZclFrame zclFrame2;
+
+        req2.setProfileId(node->profileId);
+        req2.setDstEndpoint(node->endpoint);
+        req2.setClusterId(DE_CLUSTER_ID);
+        req2.dstAddress() = node->address();
+        req2.setDstAddressMode(deCONZ::ApsExtAddress);
+        req2.setSrcEndpoint(m_srcEndpoint);
+        req2.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
+        req2.setRadius(MAX_RADIUS);
+
+        zclFrame.setSequenceNumber(node->reqSequenceNumber + 1);
+        zclFrame.setCommandId(0x04); // write RAM
+
+        zclFrame.setFrameControl(deCONZ::ZclFCClusterCommand |
+                                 deCONZ::ZclFCDirectionClientToServer |
+                                 deCONZ::ZclFCDisableDefaultResponse);
+
+        { // ZCL payload
+            QDataStream stream(&zclFrame2.payload(), QIODevice::WriteOnly);
+            stream.setByteOrder(QDataStream::LittleEndian);
+
+            quint16 offset = 0x8888;
+            quint8 dataLength = 1;
+            quint16 data0 = 1;
+            stream << offset;
+            stream << dataLength;
+            stream << data0;
+        }
+
+        { // ZCL frame
+            QDataStream stream(&req2.asdu(), QIODevice::WriteOnly);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            zclFrame2.writeToStream(stream);
+        }
+
+        if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == 0)
+        {
+        }
+    }
+
+    return ret;
 }
 
 bool StdOtauPlugin::defaultResponse(OtauNode *node, quint8 status)

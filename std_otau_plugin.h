@@ -7,6 +7,7 @@
 #include "otau_file.h"
 
 #define OTAU_CLUSTER_ID 0x0019
+#define DE_CLUSTER_ID   0xFC00
 
 #define OTAU_IMAGE_NOTIFY_CMD_ID               0x00
 #define OTAU_QUERY_NEXT_IMAGE_REQUEST_CMD_ID   0x01
