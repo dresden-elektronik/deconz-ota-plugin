@@ -43,7 +43,7 @@
 #define MAX_ACTIVITY   120 // hits 0 after 5 seconds
 #define MAX_IMG_PAGE_REQ_RETRY   12
 #define MAX_IMG_BLOCK_RSP_RETRY   10
-#define WAIT_NEXT_REQUEST_TIMEOUT 8000
+#define WAIT_NEXT_REQUEST_TIMEOUT 20000
 #define INVALID_APS_REQ_ID (0xff + 1) // request ids are 8-bit
 
 #define OTAU_IMAGE_NOTIFY_CLID                 0x0201
@@ -501,8 +501,7 @@ void StdOtauPlugin::imagePageTimerFired()
                 }
                 else
                 {
-                    if (unicastImageNotify(node->address()))
-                        node->lastActivity.restart();
+                    node->lastActivity.restart();
                 }
             }
         }
