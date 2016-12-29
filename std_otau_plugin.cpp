@@ -1578,6 +1578,7 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
         req2.setSrcEndpoint(m_srcEndpoint);
         req2.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
         req2.setRadius(MAX_RADIUS);
+        req2.setSendDelay(3000); // send 3s after upgrade end response
 
         zclFrame.setSequenceNumber(node->reqSequenceNumber + 1);
         zclFrame.setCommandId(0x04); // write RAM
