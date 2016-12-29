@@ -1568,7 +1568,6 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
     if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
     {
         deCONZ::ApsDataRequest req2;
-        deCONZ::ZclFrame zclFrame2;
 
         req2.setProfileId(node->profileId);
         req2.setDstEndpoint(node->endpoint);
@@ -1588,7 +1587,8 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
                                  deCONZ::ZclFCDisableDefaultResponse);
 
         { // ZCL payload
-            QDataStream stream(&zclFrame2.payload(), QIODevice::WriteOnly);
+            zclFrame.payload().clear();
+            QDataStream stream(&zclFrame.payload(), QIODevice::WriteOnly);
             stream.setByteOrder(QDataStream::LittleEndian);
 
             quint16 offset = 0x8888;
@@ -1602,10 +1602,10 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
         { // ZCL frame
             QDataStream stream(&req2.asdu(), QIODevice::WriteOnly);
             stream.setByteOrder(QDataStream::LittleEndian);
-            zclFrame2.writeToStream(stream);
+            zclFrame.writeToStream(stream);
         }
 
-        if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == 0)
+        if (deCONZ::ApsController::instance()->apsdeDataRequest(req2) == 0)
         {
         }
     }
