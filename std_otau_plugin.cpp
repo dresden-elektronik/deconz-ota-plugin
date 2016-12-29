@@ -201,7 +201,10 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
     }
 
     node->lastActivity.restart();
-    node->setLastZclCommand(zclFrame.commandId());
+    if (!zclFrame.isDefaultResponse())
+    {
+        node->setLastZclCommand(zclFrame.commandId());
+    }
 
     // filter
     if (zclFrame.isClusterCommand())
@@ -501,7 +504,20 @@ void StdOtauPlugin::imagePageTimerFired()
                 }
                 else
                 {
+                    DBG_Printf(DBG_INFO, "otau resend page\n");
+
                     node->lastActivity.restart();
+
+                    node->imgPageReq.pageBytesDone = 0;
+                    node->imgBlockReq = node->imgPageReq;
+
+                    node->setOffset(node->imgBlockReq.offset);
+                    node->setImageType(node->imgBlockReq.imageType);
+
+                    node->imgPageRequestRetry = 0;
+                    node->imgBlockResponseRetry = 0;
+
+                    node->setState(OtauNode::NodeWaitPageSpacing);
                 }
             }
         }
