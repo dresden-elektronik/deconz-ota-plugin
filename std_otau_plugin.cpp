@@ -1593,10 +1593,15 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
 
             quint16 offset = 0x8888;
             quint8 dataLength = 1;
-            quint16 data0 = 1;
+            quint8 data0 = 1;
+            quint8 dummy = 0;
             stream << offset;
             stream << dataLength;
+            // payload must be 4 bytes
             stream << data0;
+            stream << dummy;
+            stream << dummy;
+            stream << dummy;
         }
 
         { // ZCL frame
