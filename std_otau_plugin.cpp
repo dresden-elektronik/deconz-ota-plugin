@@ -45,6 +45,8 @@
 #define MAX_IMG_BLOCK_RSP_RETRY   10
 #define WAIT_NEXT_REQUEST_TIMEOUT 20000
 #define INVALID_APS_REQ_ID (0xff + 1) // request ids are 8-bit
+#define SENSOR_ACTIVE_TIME (1000 * 60 * 20)
+#define SENSOR_INACTIVE_TIME (1000 * 60 * 30)
 
 #define OTAU_IMAGE_NOTIFY_CLID                 0x0201
 #define OTAU_QUERY_NEXT_IMAGE_REQUEST_CLID     0x0202
@@ -75,6 +77,8 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     m_srcEndpoint = 0x01; // TODO: ask from controller
     m_model = new OtauModel(this);
     m_imagePageTimer = new QTimer(this);
+
+    m_sensorActivity.invalidate();
 
     m_imagePageTimer->setSingleShot(true);;
     m_imagePageTimer->setInterval(IMAGE_PAGE_TIMER_DELAY);
@@ -141,9 +145,27 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
 //        matchDescriptorRequest(ind);
 //    }
 
+    if (ind.profileId() == HA_PROFILE_ID || ind.profileId() == ZLL_PROFILE_ID)
+    {
+        if (ind.clusterId() == ONOFF_CLUSTER_ID || ind.clusterId() == LEVEL_CLUSTER_ID)
+        {
+            if (ind.dstAddressMode() == deCONZ::ApsGroupAddress)
+            {
+                m_sensorActivity.restart();
+                return;
+            }
+        }
+    }
+
     if (ind.clusterId() != OTAU_CLUSTER_ID)
     {
         return;
+    }
+
+    if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() > SENSOR_INACTIVE_TIME)
+    {
+        DBG_Printf(DBG_INFO, "otau sensor activity seems to have stopped\n");
+        m_sensorActivity.invalidate();
     }
 
     deCONZ::ZclFrame zclFrame;
@@ -995,6 +1017,11 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
             DBG_Printf(DBG_INFO, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE to FLS-H lp\n");
         }
+        else if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
+        {
+            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
+            DBG_Printf(DBG_INFO, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE (sensors busy)\n");
+        }
         else if (node->permitUpdate() && node->hasData())
         {
             node->rawFile = node->file.toArray();
@@ -1296,6 +1323,19 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
         return;
     }
 
+    if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
+    {
+        m_w->setPacketSpacingMs(500); // slow down
+    }
+    else if (m_w->packetSpacingMs() == 500)
+    {
+        m_w->setPacketSpacingMs(100); // speed up
+    }
+    else if (m_w->packetSpacingMs() < 100)
+    {
+        m_w->setPacketSpacingMs(100);
+    }
+
     node->refreshTimeout();
     invalidateUpdateEndRequest(node);
 
@@ -1392,10 +1432,7 @@ bool StdOtauPlugin::imagePageResponse(OtauNode *node)
     {
         quint16 spacing = node->imgBlockReq.responseSpacing;
 
-        if (m_w->packetSpacingEnabled())
-        {
-            spacing = m_w->packetSpacingMs();
-        }
+        spacing = m_w->packetSpacingMs();
 
         if (node->lastResponseTime.isValid() &&
             !node->lastResponseTime.hasExpired(spacing))

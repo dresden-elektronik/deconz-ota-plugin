@@ -42,8 +42,8 @@ public Q_SLOTS:
 
     bool acksEnabled() const;
     bool pageRequestEnabled() const;
-    bool packetSpacingEnabled() const;
     int packetSpacingMs() const;
+    void setPacketSpacingMs(int spacing);
 
     // OTAU file tab
     void saveClicked();

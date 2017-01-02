@@ -21,6 +21,8 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
 
     // OTAU update tab
     m_ouNode = 0;
+    ui->ou_finishButton->hide();
+    ui->ou_findButton->hide();
 
     connect(ui->ou_finishButton, SIGNAL(clicked()),
             this, SLOT(finishClicked()));
@@ -184,14 +186,14 @@ bool StdOtauWidget::pageRequestEnabled() const
     return ui->usePageRequestCheckBox->isChecked();
 }
 
-bool StdOtauWidget::packetSpacingEnabled() const
-{
-    return ui->spacingCheckBox->isChecked();
-}
-
 int StdOtauWidget::packetSpacingMs() const
 {
     return ui->spacingSpinBox->value();
+}
+
+void StdOtauWidget::setPacketSpacingMs(int spacing)
+{
+    ui->spacingSpinBox->setValue(spacing);
 }
 
 void StdOtauWidget::stateChanged()

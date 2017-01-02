@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>479</width>
+    <width>540</width>
     <height>561</height>
    </rect>
   </property>
@@ -245,16 +245,6 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
-          <widget class="QCheckBox" name="spacingCheckBox">
-           <property name="text">
-            <string>Packet Spacing</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
          <item row="4" column="1">
           <widget class="QSpinBox" name="spacingSpinBox">
            <property name="suffix">
@@ -264,13 +254,20 @@
             <string/>
            </property>
            <property name="minimum">
-            <number>1</number>
+            <number>15</number>
            </property>
            <property name="maximum">
-            <number>65535</number>
+            <number>8000</number>
            </property>
            <property name="value">
-            <number>15</number>
+            <number>100</number>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_14">
+           <property name="text">
+            <string>Packet Spacing</string>
            </property>
           </widget>
          </item>

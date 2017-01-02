@@ -2,12 +2,15 @@
 #define STD_OTAU_PLUGIN_H
 
 #include <QObject>
+#include <QElapsedTimer>
 #include <list>
 #include "deconz.h"
 #include "otau_file.h"
 
-#define OTAU_CLUSTER_ID 0x0019
-#define DE_CLUSTER_ID   0xFC00
+#define ONOFF_CLUSTER_ID 0x0006
+#define LEVEL_CLUSTER_ID 0x0008
+#define OTAU_CLUSTER_ID  0x0019
+#define DE_CLUSTER_ID    0xFC00
 
 #define OTAU_IMAGE_NOTIFY_CMD_ID               0x00
 #define OTAU_QUERY_NEXT_IMAGE_REQUEST_CMD_ID   0x01
@@ -108,6 +111,7 @@ private:
     QTimer *m_activityTimer;
     int m_activityCounter;
     deCONZ::Address m_activityAddress;
+    QElapsedTimer m_sensorActivity;
 };
 
 #endif // STD_OTAU_PLUGIN_H
