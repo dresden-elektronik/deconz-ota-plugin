@@ -1236,7 +1236,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         zclFrame.writeToStream(stream);
     }
 
-    if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == 0)
+    if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == deCONZ::Success)
     {
         node->apsRequestId = req.id();
         node->zclCommandId = zclFrame.commandId();
