@@ -1112,6 +1112,7 @@ void StdOtauPlugin::imageBlockRequest(const deCONZ::ApsDataIndication &ind, cons
         node->setAddress(addr);
     }
 
+    node->apsRequestId = INVALID_APS_REQ_ID;
     if (imageBlockResponse(node))
     {
         node->setState(OtauNode::NodeBusy);
@@ -1144,6 +1145,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         if (node->lastResponseTime.isValid() &&
             node->lastResponseTime.elapsed() < (1000 * 30)) // prevent stallation
         {
+            DBG_Printf(DBG_OTA, "...\n");
             return false;
         }
     }
@@ -1160,7 +1162,6 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
     if ((node->lastZclCmd() == OTAU_IMAGE_BLOCK_REQUEST_CMD_ID) || (node->state() == OtauNode::NodeAbort) || m_w->acksEnabled())
     {
         req.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
-
     }
 
     zclFrame.setSequenceNumber(node->reqSequenceNumber);
@@ -1260,6 +1261,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         return true;
     }
 
+    DBG_Printf(DBG_OTA, "otau send img block response failed\n");
     return false;
 }
 
@@ -1445,7 +1447,6 @@ bool StdOtauPlugin::imagePageResponse(OtauNode *node)
         {
             node->setState(OtauNode::NodeWaitPageSpacing);
             node->imgBlockResponseRetry++;
-            DBG_Printf(DBG_OTA, "otau img block response failed\n");
             break;
         }
     }
