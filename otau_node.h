@@ -58,6 +58,7 @@ public:
         NodeBusy,
         NodeWaitPageSpacing,
         NodeWaitNextRequest,
+        NodeWaitConfirm,
         NodeError,
         NodeAbort
     };

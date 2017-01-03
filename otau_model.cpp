@@ -236,6 +236,14 @@ OtauNode *OtauModel::getNode(const deCONZ::Address &addr, bool create)
 
     for (; i != end; ++i)
     {
+        if (addr.hasNwk() && (*i)->address().hasNwk())
+        {
+            if ((*i)->address().nwk() == addr.nwk())
+            {
+                return *i;
+            }
+        }
+
         if (addr.hasExt() && (*i)->address().hasExt())
         {
             if ((*i)->address().ext() == addr.ext())
@@ -244,14 +252,6 @@ OtauNode *OtauModel::getNode(const deCONZ::Address &addr, bool create)
                 {
                     // update nwk address
                 }
-                return *i;
-            }
-        }
-
-        if (addr.hasNwk() && (*i)->address().hasNwk())
-        {
-            if ((*i)->address().nwk() == addr.nwk())
-            {
                 return *i;
             }
         }
@@ -268,7 +268,7 @@ OtauNode *OtauModel::getNode(const deCONZ::Address &addr, bool create)
         node->model = this;
         m_nodes.push_back(node);
         endInsertRows();
-        DBG_Printf(DBG_INFO, "OtauNode added %s\n", qPrintable(addr.toStringExt()));
+        DBG_Printf(DBG_OTA, "OtauNode added %s\n", qPrintable(addr.toStringExt()));
         return node;
     }
 
