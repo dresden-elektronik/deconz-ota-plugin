@@ -1503,6 +1503,10 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
         node->setStatus(OtauNode::StatusSuccess);
         node->setOffset(node->file.totalImageSize); // mark done
 
+        node->file.subElements.clear();
+        node->setHasData(false);
+        node->setPermitUpdate(false);
+
         // use time from widget
         uint32_t upgradeTime = m_w->restartTime();
 
