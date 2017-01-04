@@ -45,6 +45,7 @@
 #define MAX_IMG_BLOCK_RSP_RETRY   10
 #define WAIT_NEXT_REQUEST_TIMEOUT 60000
 #define INVALID_APS_REQ_ID (0xff + 1) // request ids are 8-bit
+#define SENSORS_MIN_MODEL_SIZE 15
 #define SENSOR_ACTIVE_TIME (1000 * 60 * 20)
 #define SENSOR_INACTIVE_TIME (1000 * 60 * 30)
 
@@ -151,7 +152,11 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
         {
             if (ind.dstAddressMode() == deCONZ::ApsGroupAddress)
             {
-                m_sensorActivity.restart();
+                // slow down activity for larger networks if sensors are active
+                if (m_model->rowCount(QModelIndex()) > SENSORS_MIN_MODEL_SIZE)
+                {
+                    m_sensorActivity.restart();
+                }
                 return;
             }
         }
