@@ -100,7 +100,11 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             break;
 
         case SectionProgress:
-            if (node->zclCommandId == OTAU_UPGRADE_END_RESPONSE_CMD_ID)
+            if (node->status() == OtauNode::StatusWaitUpgradeEnd)
+            {
+                str = tr("Wait to finish");
+            }
+            else if (node->zclCommandId == OTAU_UPGRADE_END_RESPONSE_CMD_ID)
             {
                 switch(node->upgradeEndReq.status)
                 {

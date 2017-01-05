@@ -1014,11 +1014,11 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
             DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE to FLS-H lp\n");
         }
-        else if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
-        {
-            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-            DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE (sensors busy)\n");
-        }
+//        else if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
+//        {
+//            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
+//            DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE (sensors busy)\n");
+//        }
         else if (node->permitUpdate() && node->hasData())
         {
             node->rawFile = node->file.toArray();
@@ -1320,7 +1320,7 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
     }
     else if (m_w->packetSpacingMs() < 100)
     {
-        m_w->setPacketSpacingMs(100);
+        m_w->setPacketSpacingMs(25);
     }
 
     node->refreshTimeout();
@@ -1497,7 +1497,6 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
 
     node->setState(OtauNode::NodeIdle);
 
-
     if (m_activityAddress.ext() == node->address().ext())
     {
         m_activityCounter = 1;
@@ -1505,7 +1504,7 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
 
     if (node->upgradeEndReq.status == OTAU_SUCCESS)
     {
-        node->setStatus(OtauNode::StatusSuccess);
+        node->setStatus(OtauNode::StatusWaitUpgradeEnd);
         node->setOffset(node->file.totalImageSize); // mark done
 
         node->file.subElements.clear();
@@ -1551,6 +1550,18 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
         return false;
     }
 
+    if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
+    {
+        upgradeTime = 0xffff; // wait
+    }
+    else if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
+    {
+        if (node->softwareVersion() > 0x200000D8)
+        {
+            upgradeTime = 0xffff; // use DE Cluster for restart [1]
+        }
+    }
+
     req.setProfileId(node->profileId);
     req.setDstEndpoint(node->endpoint);
     req.setClusterId(OTAU_CLUSTER_ID);
@@ -1566,11 +1577,6 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
     zclFrame.setFrameControl(deCONZ::ZclFCClusterCommand |
                              deCONZ::ZclFCDirectionServerToClient |
                              deCONZ::ZclFCDisableDefaultResponse);
-
-    if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
-    {
-        upgradeTime = 0xffff; // use DE Cluster for restart [1]
-    }
 
     { // ZCL payload
         QDataStream stream(&zclFrame.payload(), QIODevice::WriteOnly);
@@ -1598,11 +1604,17 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
     {
         node->apsRequestId = req.id();
         node->zclCommandId = zclFrame.commandId();
+        if (upgradeTime < 0xffff)
+        {
+            node->setStatus(OtauNode::StatusSuccess);
+        }
         ret = true;
     }
 
     // [1] send delayed DE cluster WDT Reset command
-    if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
+    if (node->softwareVersion() >= 0x200000D8 &&
+        node->status() == OtauNode::StatusSuccess &&
+        node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
     {
         deCONZ::ApsDataRequest req2;
 

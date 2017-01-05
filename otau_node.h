@@ -75,7 +75,8 @@ public:
         StatusWrongPlatform      = 0x07,
         StatusTimeout            = 0x08,
         StatusIgnored            = 0x09,
-        StatusCrcError           = 0x0A
+        StatusCrcError           = 0x0A,
+        StatusWaitUpgradeEnd     = 0x0B
     };
 
     OtauNode(const deCONZ::Address &addr);
