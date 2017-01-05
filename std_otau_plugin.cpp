@@ -59,6 +59,7 @@
 
 #define IMG_BLK_RSP_HEADER_SIZE  (1 + 2 + 2 + 4 + 4)
 
+#define OTA_TIME_INFINITE                      0xFFFFFFFFUL
 #define DONT_CARE_FILE_VERSION                 0xFFFFFFFFUL
 
 #define OTAU_IMAGE_TYPE_QJ             0x00 // Query jitter
@@ -1552,13 +1553,13 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
 
     if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
     {
-        upgradeTime = 0xffff; // wait
+        upgradeTime = OTA_TIME_INFINITE; // wait
     }
     else if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
     {
         if (node->softwareVersion() > 0x200000D8)
         {
-            upgradeTime = 0xffff; // use DE Cluster for restart [1]
+            upgradeTime = OTA_TIME_INFINITE; // use DE Cluster for restart [1]
         }
     }
 
@@ -1604,7 +1605,7 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
     {
         node->apsRequestId = req.id();
         node->zclCommandId = zclFrame.commandId();
-        if (upgradeTime < 0xffff)
+        if (upgradeTime < OTA_TIME_INFINITE)
         {
             node->setStatus(OtauNode::StatusSuccess);
         }
