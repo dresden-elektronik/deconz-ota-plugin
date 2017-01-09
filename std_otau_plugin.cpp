@@ -1558,6 +1558,7 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
 {
     deCONZ::ApsDataRequest req;
     deCONZ::ZclFrame zclFrame;
+    bool useDeCluster = false;
 
     DBG_Assert(node->address().hasExt());
     if (!node->address().hasExt())
@@ -1582,6 +1583,7 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
         if (node->softwareVersion() > 0x200000D8)
         {
             upgradeTime = OTA_TIME_INFINITE; // use DE Cluster for restart [1]
+            useDeCluster = true;
         }
     }
 
@@ -1635,8 +1637,8 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
     }
 
     // [1] send delayed DE cluster WDT Reset command
-    if (node->softwareVersion() >= 0x200000D8 &&
-        node->status() == OtauNode::StatusSuccess &&
+    if (useDeCluster &&
+        node->status() == OtauNode::StatusWaitUpgradeEnd &&
         node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
     {
         deCONZ::ApsDataRequest req2;
