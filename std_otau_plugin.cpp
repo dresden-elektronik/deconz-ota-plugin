@@ -228,6 +228,11 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
         return;
     }
 
+    if (otauIsActive() && node->address().ext() != m_activityAddress.ext())
+    {
+        return;
+    }
+
     node->lastActivity.restart();
     if (!zclFrame.isDefaultResponse())
     {
@@ -270,6 +275,9 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
  */
 void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
 {
+    if (!conf.dstAddress().isNwkUnicast())
+        return;
+
     if (m_state == StateNotify)
     {
         if (conf.id() == notifyReqId)
@@ -1154,6 +1162,8 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
             DBG_Printf(DBG_OTA, "...\n");
             return false;
         }
+
+        DBG_Printf(DBG_OTA, "otau warn apsRequestId != 0\n");
     }
 
     req.setProfileId(node->profileId);
@@ -1189,14 +1199,17 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         {
             stream << (uint8_t)OTAU_ABORT;
             node->setState(OtauNode::NodeAbort);
+            DBG_Printf(DBG_OTA, "otau send img block 0x%016LLX OTAU_ABORT\n", node->address().ext());
         }
         else if (node->state() == OtauNode::NodeAbort)
         {
             stream << (uint8_t)OTAU_ABORT;
+            DBG_Printf(DBG_OTA, "otau send img block 0x%016LLX OTAU_ABORT\n", node->address().ext());
         }
         else if (!node->permitUpdate() || !node->hasData())
         {
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
+            DBG_Printf(DBG_OTA, "otau send img block 0x%016LLX OTAU_NO_IMAGE_AVAILABLE\n", node->address().ext());
         }
         else if (node->imgBlockReq.offset < (uint32_t)node->rawFile.size())
         {
@@ -1227,6 +1240,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
                 if (dataSize == 0)
                 {
                     // dont send empty block response
+                    DBG_Printf(DBG_OTA, "otau prevent img block rsp with dataSize = 0 0x%016LLX\n", node->address().ext());
                     return false;
                 }
             }
@@ -1238,6 +1252,11 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
                 dataSize = avail;
             }
 
+            if (dataSize == 0)
+            {
+                DBG_Printf(DBG_OTA, "otau warn img block rsp with dataSize = 0 0x%016LLX\n", node->address().ext());
+            }
+
             stream << dataSize;
 
             for (uint i = 0; (i < dataSize) && (offset < (uint32_t)node->rawFile.size()); i++)
@@ -1247,6 +1266,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         }
         else
         {
+            DBG_Printf(DBG_OTA, "otau send img block  0x%016LLX OTAU_MALFORMED_COMMAND\n", node->address().ext());
             stream << (uint8_t)OTAU_MALFORMED_COMMAND;
         }
     }
@@ -1259,6 +1279,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
 
     if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == deCONZ::Success)
     {
+        DBG_Printf(DBG_OTA, "otau send img block rsp offset: 0x%08X dataSize %u 0x%016LLX\n", node->imgBlockReq.offset, dataSize, node->address().ext());
         node->imgBlockReq.pageBytesDone += dataSize;
         node->imgBlockReq.offset += dataSize;
         node->apsRequestId = req.id();
@@ -1364,9 +1385,9 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
     node->endpoint = ind.srcEndpoint();
     node->profileId = ind.profileId();
 
-    if (DBG_IsEnabled(DBG_INFO_L2))
+    if (DBG_IsEnabled(DBG_OTA))
     {
-        DBG_Printf(DBG_INFO_L2, "otau img page req fwVersion:0x%08X, offset: 0x%08X, pageSize: %u, rspSpacing: %u ms\n", node->imgBlockReq.fileVersion, node->imgBlockReq.offset, node->imgBlockReq.pageSize, node->imgBlockReq.responseSpacing);
+        DBG_Printf(DBG_OTA, "otau img page req fwVersion:0x%08X, offset: 0x%08X, pageSize: %u, rspSpacing: %u ms\n", node->imgBlockReq.fileVersion, node->imgBlockReq.offset, node->imgBlockReq.pageSize, node->imgBlockReq.responseSpacing);
     }
 
     // IEEE address present?
@@ -1431,6 +1452,7 @@ bool StdOtauPlugin::imagePageResponse(OtauNode *node)
             if (!m_imagePageTimer->isActive())
                 m_imagePageTimer->start(IMAGE_PAGE_TIMER_DELAY);
 
+            DBG_Printf(DBG_OTA, "otau wait spacing 0x%016LLX\n", node->address().ext());
             return true;
         }
     }
