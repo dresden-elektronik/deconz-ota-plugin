@@ -1,5 +1,6 @@
 #include <QDebug>
 #include <QDir>
+#include <QSettings>
 #include <QtPlugin>
 #include <QTimer>
 #include <stdint.h>
@@ -45,9 +46,14 @@
 #define MAX_IMG_BLOCK_RSP_RETRY   10
 #define WAIT_NEXT_REQUEST_TIMEOUT 60000
 #define INVALID_APS_REQ_ID (0xff + 1) // request ids are 8-bit
-#define SENSORS_MIN_MODEL_SIZE 15
+#define SENSORS_MIN_MODEL_SIZE 10
 #define SENSOR_ACTIVE_TIME (1000 * 60 * 20)
 #define SENSOR_INACTIVE_TIME (1000 * 60 * 30)
+
+#define SLOW_PAGE_SPACEING 250
+#define FAST_PAGE_SPACEING 25
+#define MIN_PAGE_SPACEING 10
+#define MAX_PAGE_SPACEING 3000
 
 #define OTAU_IMAGE_NOTIFY_CLID                 0x0201
 #define OTAU_QUERY_NEXT_IMAGE_REQUEST_CLID     0x0202
@@ -127,7 +133,33 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 
     connect(apsCtrl, SIGNAL(nodeEvent(deCONZ::NodeEvent)),
             this, SLOT(nodeEvent(deCONZ::NodeEvent)));
+
+    QSettings config(deCONZ::getStorageLocation(deCONZ::ConfigLocation), QSettings::IniFormat);
+
+    m_slowPageSpaceing = SLOW_PAGE_SPACEING;
+    if (config.contains("otau/slow-page-spacing"))
+    {
+        bool ok;
+        int sp = config.value("otau/slow-page-spacing", SLOW_PAGE_SPACEING).toInt(&ok);
+        if (ok && sp > FAST_PAGE_SPACEING && sp < MAX_PAGE_SPACEING)
+        {
+            m_slowPageSpaceing = sp;
+        }
+    }
+
+    m_fastPageSpaceing = FAST_PAGE_SPACEING;
+    if (config.contains("otau/fast-page-spacing"))
+    {
+        bool ok;
+        int sp = config.value("otau/fast-page-spacing", FAST_PAGE_SPACEING).toInt(&ok);
+        if (ok && sp >= MIN_PAGE_SPACEING && sp < SLOW_PAGE_SPACEING && sp < MAX_PAGE_SPACEING)
+        {
+            m_fastPageSpaceing = sp;
+        }
+    }
+
     createWidget();
+    m_w->setPacketSpacingMs(m_fastPageSpaceing);
 }
 
 /*! APSDE-DATA.indication callback.
@@ -1335,15 +1367,15 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
 
     if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
     {
-        m_w->setPacketSpacingMs(500); // slow down
+        m_w->setPacketSpacingMs(SLOW_PAGE_SPACEING); // slow down
     }
-    else if (m_w->packetSpacingMs() == 500)
+    else if (m_w->packetSpacingMs() == SLOW_PAGE_SPACEING)
     {
-        m_w->setPacketSpacingMs(100); // speed up
+        m_w->setPacketSpacingMs(FAST_PAGE_SPACEING); // speed up
     }
-    else if (m_w->packetSpacingMs() < 100)
+    else if (m_w->packetSpacingMs() < MIN_PAGE_SPACEING)
     {
-        m_w->setPacketSpacingMs(25);
+        m_w->setPacketSpacingMs(MIN_PAGE_SPACEING);
     }
 
     node->refreshTimeout();

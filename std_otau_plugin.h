@@ -112,6 +112,8 @@ private:
     int m_activityCounter;
     deCONZ::Address m_activityAddress;
     QElapsedTimer m_sensorActivity;
+    int m_fastPageSpaceing;
+    int m_slowPageSpaceing;
 };
 
 #endif // STD_OTAU_PLUGIN_H
