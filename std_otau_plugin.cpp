@@ -127,6 +127,7 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 
     connect(apsCtrl, SIGNAL(nodeEvent(deCONZ::NodeEvent)),
             this, SLOT(nodeEvent(deCONZ::NodeEvent)));
+    createWidget();
 }
 
 /*! APSDE-DATA.indication callback.
