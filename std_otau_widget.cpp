@@ -21,14 +21,6 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
 
     // OTAU update tab
     m_ouNode = 0;
-    ui->ou_finishButton->hide();
-    ui->ou_findButton->hide();
-
-    connect(ui->ou_finishButton, SIGNAL(clicked()),
-            this, SLOT(finishClicked()));
-
-    connect(ui->ou_findButton, SIGNAL(clicked()),
-            this, SLOT(findClicked()));
 
     connect(ui->ou_queryButton, SIGNAL(clicked()),
             this, SLOT(queryClicked()));
@@ -60,8 +52,6 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
     ui->tableView->resizeColumnToContents(OtauModel::SectionAddress);
     ui->tableView->resizeColumnToContents(OtauModel::SectionSoftwareVersion);
     ui->tableView->resizeColumnToContents(OtauModel::SectionImageType);
-
-    ui->ou_finishButton->setEnabled(false);
 }
 
 StdOtauWidget::~StdOtauWidget()
@@ -81,11 +71,6 @@ uint StdOtauWidget::restartTime()
         return ui->restartAfterUpgradeSpinBox->value();
     }
     return UNLIMITED_WATING_TIME;
-}
-
-void StdOtauWidget::findClicked()
-{
-    emit broadcastImageNotify();
 }
 
 void StdOtauWidget::queryClicked()
@@ -196,27 +181,20 @@ void StdOtauWidget::setPacketSpacingMs(int spacing)
     ui->spacingSpinBox->setValue(spacing);
 }
 
-void StdOtauWidget::stateChanged()
+void StdOtauWidget::stateChanged(int state)
 {
-//    switch (m_plugin->state())
-//    {
-//    case DeOtauPlugin::StateNotify:
-//    {
-//        ui->findButton->setText(tr("Abort"));
-//    }
-//        break;
-
-//    case DeOtauPlugin::StateBusy:
-//        break;
-
-
-//    case DeOtauPlugin::StateIdle: // fall through
-//    default:
-//    {
-//        ui->findButton->setText(tr("Find"));
-//    }
-//        break;
-    //    }
+    if (state == StdOtauPlugin::StateDisabled)
+    {
+        ui->labelOtauState->setText(tr("OTAU disabled"));
+    }
+    else if (state == StdOtauPlugin::StateDisabled)
+    {
+        ui->labelOtauState->setText(tr("OTAU wait sensors idle"));
+    }
+    else
+    {
+        ui->labelOtauState->setText(tr("OTAU enabled"));
+    }
 }
 
 void StdOtauWidget::clearSettingsBox()
@@ -230,17 +208,8 @@ void StdOtauWidget::clearSettingsBox()
 
 void StdOtauWidget::updateSettingsBox()
 {
-    bool enableFinish = false;
-
     if (m_ouNode)
     {
-        if (m_ouNode->upgradeEndReq.manufacturerCode != 0 &&
-            m_ouNode->upgradeEndReq.fileVersion != 0 &&
-            m_ouNode->upgradeEndReq.status == OTAU_SUCCESS)
-        {
-            enableFinish = true;
-        }
-
         if (m_ouNode->hasData())
         {
             const OtauFile &of = m_ouNode->file;
@@ -273,8 +242,6 @@ void StdOtauWidget::updateSettingsBox()
             clearSettingsBox();
         }
     }
-
-    ui->ou_finishButton->setEnabled(enableFinish);
 }
 
 void StdOtauWidget::otauTableActivated(const QModelIndex &index)
@@ -282,18 +249,6 @@ void StdOtauWidget::otauTableActivated(const QModelIndex &index)
     if (index.isValid())
     {
         emit activatedNodeAtRow(index.row());
-    }
-}
-
-void StdOtauWidget::finishClicked()
-{
-    if (m_ouNode)
-    {
-        emit unicastUpgradeEndRequest(m_ouNode->address());
-
-        // disable button for a few secs
-        ui->ou_finishButton->setEnabled(false);
-        QTimer::singleShot(5000, this, SLOT(updateSettingsBox()));
     }
 }
 

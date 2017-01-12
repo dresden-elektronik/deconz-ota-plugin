@@ -27,14 +27,12 @@ public:
     uint restartTime();
 
 public Q_SLOTS:
-    void stateChanged();
+    void stateChanged(int state);
     void clearSettingsBox();
     void updateSettingsBox();
     void otauTableActivated(const QModelIndex &index);
 
     // OTAU upgrade
-    void finishClicked();
-    void findClicked();
     void queryClicked();
     void abortClicked();
     void updateClicked();

@@ -52,9 +52,9 @@ class StdOtauPlugin : public QObject,
 public:
     enum State
     {
-        StateIdle,
-        StateNotify,
-        StateBusy
+        StateEnabled,
+        StateDisabled,
+        StateBusySensors
     };
 
     explicit StdOtauPlugin(QObject *parent = 0);
@@ -72,7 +72,6 @@ public Q_SLOTS:
     bool broadcastImageNotify();
     bool unicastImageNotify(const deCONZ::Address &addr);
     void unicastUpgradeEndRequest(const deCONZ::Address &addr);
-    bool abortSearch();
     void matchDescriptorRequest(const deCONZ::ApsDataIndication &ind);
     void queryNextImageRequest(const deCONZ::ApsDataIndication &ind, const deCONZ::ZclFrame &zclFrame);
     bool queryNextImageResponse(OtauNode *node);
@@ -94,7 +93,7 @@ public Q_SLOTS:
     bool otauIsActive() { return m_activityCounter > 0; }
 
 Q_SIGNALS:
-    void stateChanged();
+    void stateChanged(int state);
 
 private:
     void setState(State state);
@@ -114,6 +113,8 @@ private:
     QElapsedTimer m_sensorActivity;
     int m_fastPageSpaceing;
     int m_slowPageSpaceing;
+    bool m_sensorDontStart;
+    bool m_sensorBusyRestart;
 };
 
 #endif // STD_OTAU_PLUGIN_H

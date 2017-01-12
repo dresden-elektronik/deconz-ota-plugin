@@ -80,7 +80,7 @@ static uint8_t notifyReqId;
 StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     QObject(parent)
 {
-    m_state = StateIdle;
+    m_state = StateEnabled;
     m_w = 0;
     m_srcEndpoint = 0x01; // TODO: ask from controller
     m_model = new OtauModel(this);
@@ -134,12 +134,14 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     connect(apsCtrl, SIGNAL(nodeEvent(deCONZ::NodeEvent)),
             this, SLOT(nodeEvent(deCONZ::NodeEvent)));
 
+
     QSettings config(deCONZ::getStorageLocation(deCONZ::ConfigLocation), QSettings::IniFormat);
 
+    // slow page spacing
+    bool ok = false;;
     m_slowPageSpaceing = SLOW_PAGE_SPACEING;
     if (config.contains("otau/slow-page-spacing"))
     {
-        bool ok;
         int sp = config.value("otau/slow-page-spacing", SLOW_PAGE_SPACEING).toInt(&ok);
         if (ok && sp > FAST_PAGE_SPACEING && sp < MAX_PAGE_SPACEING)
         {
@@ -147,15 +149,48 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
         }
     }
 
+    if (!ok)
+    {
+        config.setValue("otau/slow-page-spacing", m_slowPageSpaceing);
+    }
+
+    // fast page spacing
+    ok = false;
     m_fastPageSpaceing = FAST_PAGE_SPACEING;
     if (config.contains("otau/fast-page-spacing"))
     {
-        bool ok;
         int sp = config.value("otau/fast-page-spacing", FAST_PAGE_SPACEING).toInt(&ok);
         if (ok && sp >= MIN_PAGE_SPACEING && sp < SLOW_PAGE_SPACEING && sp < MAX_PAGE_SPACEING)
         {
             m_fastPageSpaceing = sp;
         }
+    }
+
+    if (!ok)
+    {
+        config.setValue("otau/fast-page-spacing", m_fastPageSpaceing);
+    }
+
+    // don't start ota update if sensor busy
+    m_sensorDontStart = true;
+    if (config.contains("otau/sensor-dont-start"))
+    {
+        m_sensorDontStart = config.value("otau/sensor-dont-start", true).toBool();
+    }
+    else
+    {
+        config.setValue("otau/sensor-dont-start", m_sensorDontStart);
+    }
+
+    // don't restart after ota if sensor busy
+    m_sensorBusyRestart = true;
+    if (config.contains("otau/sensor-restart"))
+    {
+        m_sensorBusyRestart = config.value("otau/sensor-restart", true).toBool();
+    }
+    else
+    {
+        config.setValue("otau/sensor-restart", m_sensorBusyRestart);
     }
 
     createWidget();
@@ -175,6 +210,16 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
         return;
     }
 
+    if (apsCtrl->getParameter(deCONZ::ParamOtauActive) == 0)
+    {
+        setState(StateDisabled);
+
+    }
+    else if (state() == StateDisabled)
+    {
+        setState(StateEnabled);
+    }
+
 //    if (ind.profileId() == ZDP_PROFILE_ID && ind.clusterId() == ZDP_MATCH_DESCRIPTOR_CLID)
 //    {
 //        matchDescriptorRequest(ind);
@@ -190,6 +235,11 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
                 if (m_model->rowCount(QModelIndex()) > SENSORS_MIN_MODEL_SIZE)
                 {
                     m_sensorActivity.restart();
+
+                    if (state() != StateBusySensors && m_sensorDontStart)
+                    {
+                        setState(StateBusySensors);
+                    }
                 }
                 return;
             }
@@ -205,6 +255,7 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
     {
         DBG_Printf(DBG_OTA, "otau sensor activity seems to have stopped\n");
         m_sensorActivity.invalidate();
+        setState(StateEnabled);
     }
 
     deCONZ::ZclFrame zclFrame;
@@ -311,56 +362,47 @@ void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
     if (!conf.dstAddress().isNwkUnicast())
         return;
 
-    if (m_state == StateNotify)
-    {
-        if (conf.id() == notifyReqId)
-        {
-            setState(StateIdle);
-        }
-    }
-    else if (m_state == StateIdle)
-    {
-        OtauNode *node = m_model->getNode(conf.dstAddress());
+    OtauNode *node = m_model->getNode(conf.dstAddress());
 
-        if (node)
+    if (node)
+    {
+        if (node->state() == OtauNode::NodeAbort)
         {
-            if (node->state() == OtauNode::NodeAbort)
+            return;
+        }
+
+        if (node->apsRequestId == INVALID_APS_REQ_ID)
+        { }
+        else if (node->apsRequestId == conf.id())
+        {
+            node->apsRequestId = INVALID_APS_REQ_ID;
+
+            // wait for next query
+            if (conf.status() != deCONZ::ApsSuccessStatus)
             {
-                return;
+                DBG_Printf(DBG_OTA, "otau aps conf failed status 0x%02X\n", conf.status());
+                //node->setState(OtauNode::NodeError);
+            }
+            else
+            {
+                node->refreshTimeout();
             }
 
-            if (node->apsRequestId == INVALID_APS_REQ_ID)
-            { }
-            else if (node->apsRequestId == conf.id())
+            if (node->lastZclCmd() == OTAU_IMAGE_PAGE_REQUEST_CMD_ID)
             {
-                node->apsRequestId = INVALID_APS_REQ_ID;
-
-                // wait for next query
-                if (conf.status() != deCONZ::ApsSuccessStatus)
+                //imagePageResponse(node);
+            }
+            else if (node->zclCommandId == OTAU_UPGRADE_END_RESPONSE_CMD_ID)
+            {
+                if (conf.status() == deCONZ::ApsSuccessStatus)
                 {
-                    DBG_Printf(DBG_OTA, "otau aps conf failed status 0x%02X\n", conf.status());
-                    //node->setState(OtauNode::NodeError);
-                }
-                else
-                {
-                    node->refreshTimeout();
-                }
-
-                if (node->lastZclCmd() == OTAU_IMAGE_PAGE_REQUEST_CMD_ID)
-                {
-                    //imagePageResponse(node);
-                }
-                else if (node->zclCommandId == OTAU_UPGRADE_END_RESPONSE_CMD_ID)
-                {
-                    if (conf.status() == deCONZ::ApsSuccessStatus)
-                    {
-                        node->setHasData(false);
+                    node->setHasData(false);
 //                        invalidateUpdateEndRequest(node);
-                    }
                 }
             }
         }
     }
+
 }
 
 /*! Handler for node events.
@@ -665,7 +707,7 @@ void StdOtauPlugin::markOtauActivity(const deCONZ::Address &address)
  */
 bool StdOtauPlugin::imageNotify(ImageNotifyReq *notf)
 {
-    if (m_state == StateIdle)
+    if (m_state == StateEnabled)
     {
         deCONZ::ApsDataRequest req;
         deCONZ::ZclFrame zclFrame;
@@ -813,25 +855,11 @@ void StdOtauPlugin::unicastUpgradeEndRequest(const deCONZ::Address &addr)
     }
 }
 
-/*! Aborts searching for otau nodes.
- */
-bool StdOtauPlugin::abortSearch()
-{
-    if (m_state == StateNotify)
-    {
-        setState(StateIdle);
-        return true;
-    }
-
-    return false;
-}
-
 /*! Handles a match descriptor request and sends the response if needed.
     \param ind - the APSDE-DATA.indication
  */
 void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
 {
-
     bool sendResponse = false;
     uint8_t seqNo;
     uint16_t shortAddr;
@@ -1037,6 +1065,11 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_ABORT;
             DBG_Printf(DBG_OTA, "Send query next image response: OTAU_ABORT\n");
         }
+        else if (m_sensorDontStart && m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
+        {
+            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
+            DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE (sensors busy)\n");
+        }
 //        else if (!otauIsActive())
 //        {
 //            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
@@ -1056,11 +1089,6 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
             DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE to FLS-H lp\n");
         }
-//        else if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
-//        {
-//            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-//            DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE (sensors busy)\n");
-//        }
         else if (node->permitUpdate() && node->hasData())
         {
             node->rawFile = node->file.toArray();
@@ -1607,17 +1635,24 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
         return false;
     }
 
-    if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
-    {
-        upgradeTime = OTA_TIME_INFINITE; // wait
-    }
-    else if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
+
+    if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
     {
         if (node->softwareVersion() > 0x200000D8)
         {
             upgradeTime = OTA_TIME_INFINITE; // use DE Cluster for restart [1]
             useDeCluster = true;
+
+            if (!m_sensorBusyRestart &&
+                 m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
+            {
+                useDeCluster = false;
+            }
         }
+    }
+    else if (!m_sensorBusyRestart && m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
+    {
+        upgradeTime = OTA_TIME_INFINITE; // wait
     }
 
     req.setProfileId(node->profileId);
@@ -1816,6 +1851,8 @@ QWidget *StdOtauPlugin::createWidget()
         connect(m_w, SIGNAL(activatedNodeAtRow(int)),
                 this, SLOT(activatedNodeAtRow(int)));
 
+        connect(this, SIGNAL(stateChanged(int)), m_w, SLOT(stateChanged(int)));
+
         m_w->setOtauModel(m_model);
     }
 
@@ -1845,7 +1882,7 @@ void StdOtauPlugin::setState(StdOtauPlugin::State state)
     if (m_state != state)
     {
         m_state = state;
-        emit stateChanged();
+        emit stateChanged(m_state);
     }
 }
 
