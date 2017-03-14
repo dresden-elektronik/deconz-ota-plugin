@@ -220,10 +220,10 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
         setState(StateEnabled);
     }
 
-//    if (ind.profileId() == ZDP_PROFILE_ID && ind.clusterId() == ZDP_MATCH_DESCRIPTOR_CLID)
-//    {
-//        matchDescriptorRequest(ind);
-//    }
+    if (ind.profileId() == ZDP_PROFILE_ID && ind.clusterId() == ZDP_MATCH_DESCRIPTOR_CLID)
+    {
+        matchDescriptorRequest(ind);
+    }
 
     if (ind.profileId() == HA_PROFILE_ID || ind.profileId() == ZLL_PROFILE_ID)
     {
@@ -865,7 +865,6 @@ void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
     uint16_t shortAddr;
     uint16_t profileId;
     uint8_t serverClusterCount;
-    //uint8_t serverClusterCount; // not used
 
     if (ind.asdu().size() < 7) // minimum size for match descriptor request
     {
@@ -885,7 +884,7 @@ void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
             uint16_t clusterId;
             stream >> clusterId;
 
-            if (clusterId == OTAU_CLUSTER_ID)
+            if (clusterId == OTAU_CLUSTER_ID && profileId == ZLL_PROFILE_ID)
             {
                 DBG_Printf(DBG_OTA, "otau match descriptor req, profileId 0x%04X from 0x%04X\n", profileId, ind.srcAddress().nwk());
                 sendResponse = true;
@@ -903,6 +902,8 @@ void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
         req.setDstAddressMode(deCONZ::ApsNwkAddress);
         req.setProfileId(ZDP_PROFILE_ID);
         req.setClusterId(ZDP_MATCH_DESCRIPTOR_RSP_CLID);
+        req.setDstEndpoint(ZDO_ENDPOINT);
+        req.setSrcEndpoint(ZDO_ENDPOINT);
 
         QDataStream stream(&req.asdu(), QIODevice::WriteOnly);
         stream.setByteOrder(QDataStream::LittleEndian);
