@@ -73,8 +73,6 @@
 #define OTAU_IMAGE_TYPE_QJ_MFC_IT      0x02 // Query jitter, manufacturer code, image type
 #define OTAU_IMAGE_TYPE_QJ_MFC_IT_FV   0x03 // Query jitter, manufacturer code, image type, file version
 
-static uint8_t notifyReqId;
-
 /*! The constructor.
  */
 StdOtauPlugin::StdOtauPlugin(QObject *parent) :
