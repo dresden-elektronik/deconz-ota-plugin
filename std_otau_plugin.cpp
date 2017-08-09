@@ -135,6 +135,12 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 
     QSettings config(deCONZ::getStorageLocation(deCONZ::ConfigLocation), QSettings::IniFormat);
 
+    m_sensorSlowdown = config.value("otau/sensor-slowdown", SENSORS_MIN_MODEL_SIZE).toInt();
+    if (!config.contains("otau/sensor-slowdown"))
+    {
+        config.setValue("otau/sensor-slowdown", SENSORS_MIN_MODEL_SIZE);
+    }
+
     // slow page spacing
     bool ok = false;;
     m_slowPageSpaceing = SLOW_PAGE_SPACEING;
@@ -230,7 +236,7 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
             if (ind.dstAddressMode() == deCONZ::ApsGroupAddress)
             {
                 // slow down activity for larger networks if sensors are active
-                if (m_model->rowCount(QModelIndex()) > SENSORS_MIN_MODEL_SIZE)
+                if (m_model->rowCount(QModelIndex()) > m_sensorSlowdown)
                 {
                     m_sensorActivity.restart();
 

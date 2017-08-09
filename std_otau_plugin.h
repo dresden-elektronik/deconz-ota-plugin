@@ -103,6 +103,7 @@ private:
     OtauModel *m_model;
     State m_state;
     quint8 m_srcEndpoint;
+    int m_sensorSlowdown;
     StdOtauWidget *m_w;
     quint8 m_zclSeq;
     QTimer *m_imagePageTimer;
