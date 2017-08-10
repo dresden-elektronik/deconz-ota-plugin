@@ -139,7 +139,7 @@ void StdOtauWidget::fileSelectClicked()
         QString path = QFileDialog::getOpenFileName(this,
                                                     "Select a firmware file",
                                                     dirpath,
-                                                    "Firmware (*.zigbee)");
+                                                    "Firmware (*.zigbee *.ota.signed)");
         if (path.isEmpty())
         {
             clearSettingsBox();
@@ -328,7 +328,7 @@ void StdOtauWidget::openClicked()
     m_path = QFileDialog::getOpenFileName(this,
                                      "Select a firmware file",
                                      path,
-                                     "Firmware (*.GCF *.bin *.zigbee)");
+                                     "Firmware (*.GCF *.bin *.zigbee *.ota.signed)");
 
     if (!m_path.isEmpty())
     {
@@ -392,8 +392,19 @@ void StdOtauWidget::updateEditor()
     str.sprintf("0x%04X", m_editOf.zigBeeStackVersion);
     ui->of_zigbeeStackVersionEdit->setText(str);
 
-
-    // TODO: description
+    QString descr;
+    for (size_t i = 0; i < sizeof(m_editOf.headerString); i++)
+    {
+        if (isprint(m_editOf.headerString[i]))
+        {
+            descr.append((char)m_editOf.headerString[i]);
+        }
+        else
+        {
+            descr.append(' ');
+        }
+    }
+    ui->of_descriptionEdit->setPlainText(descr);
 
     // standard 0
     str.sprintf("0x%08X", 0);

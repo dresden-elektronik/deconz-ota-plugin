@@ -119,9 +119,24 @@ bool OtauFile::fromArray(const QByteArray &arr)
         return false;
     }
 
+    const char *hdr = "\x1e\xf1\xee\x0b";
+
+    int offset = arr.indexOf(hdr);
+    if (offset < 0)
+    {
+        return false;
+    }
+
     uint processedLength = 0;
     QDataStream stream(arr);
     stream.setByteOrder(QDataStream::LittleEndian);
+
+    while (offset > 0)
+    {
+        quint8 dummy;
+        stream >> dummy;
+        offset--;
+    }
 
     stream >> upgradeFileId;
     stream >> headerVersion;
@@ -140,6 +155,8 @@ bool OtauFile::fromArray(const QByteArray &arr)
     for (uint i = 0; i < sizeof(headerString); i++)
     {
         stream >> headerString[i];
+        if (!isprint(headerString[i]))
+            headerString[i] = ' ';
     }
 
     stream >> totalImageSize;
@@ -205,10 +222,9 @@ bool OtauFile::fromArray(const QByteArray &arr)
         }
         else
         {
-            qDebug() << "sub element size does not match real size";
-            return false;
+            DBG_Printf(DBG_INFO, "sub element size does not match real size\n");
         }
     }
 
-    return (stream.status() != QDataStream::ReadPastEnd);
+    return !subElements.empty();
 }
