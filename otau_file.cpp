@@ -222,7 +222,7 @@ bool OtauFile::fromArray(const QByteArray &arr)
         }
         else
         {
-            DBG_Printf(DBG_INFO, "sub element size does not match real size\n");
+            DBG_Printf(DBG_INFO_L2, "sub element size does not match real size\n");
         }
     }
 

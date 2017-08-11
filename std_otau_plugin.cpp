@@ -199,6 +199,8 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 
     createWidget();
     m_w->setPacketSpacingMs(m_fastPageSpaceing);
+
+    checkFileLinks();
 }
 
 /*! APSDE-DATA.indication callback.
@@ -487,7 +489,6 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node, const QString &path
                 continue;
             }
 
-
             imageType = args[1].toUShort(&ok, 16);
 
             if (!ok)
@@ -705,6 +706,61 @@ void StdOtauPlugin::markOtauActivity(const deCONZ::Address &address)
     }
 }
 
+void StdOtauPlugin::checkFileLinks()
+{
+    QStringList paths;
+    paths.append(m_imgPath);
+    //paths.append(deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau");
+
+    for (QString path : paths)
+    {
+        QDir dir(path);
+        if (!dir.exists())
+        {
+            continue;
+        }
+
+        QStringList ls = dir.entryList();
+
+        for (const QString n : ls)
+        {
+            if (!n.endsWith(".zigbee") && !n.endsWith(".ota.signed"))
+                continue;
+
+            QFile file(path + "/" + n);
+            if (!file.open(QFile::ReadOnly))
+                continue;
+
+            QByteArray arr = file.readAll();
+            if (arr.isEmpty())
+                continue;
+
+            OtauFile of;
+            if (!of.fromArray(arr))
+                continue;
+
+            QString fname;
+            fname.sprintf("%04X-%04X-%08X", of.manufacturerCode, of.imageType, of.fileVersion);
+
+            bool ok= false;
+            for (const QString &n2 : ls)
+            {
+                if (n2.startsWith(fname))
+                {
+                    ok = true;
+                    break;
+                }
+            }
+
+            if (ok)
+                continue;
+
+            DBG_Printf(DBG_INFO, "create %s\n", qPrintable(fname));
+            file.copy(path + "/" + fname + ".zigbee");
+        }
+    }
+}
+
 /*! Sends a image notify request.
     \param notf - the request parameters
     \return true on success false otherwise
@@ -888,7 +944,7 @@ void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
             uint16_t clusterId;
             stream >> clusterId;
 
-            if (clusterId == OTAU_CLUSTER_ID && profileId == ZLL_PROFILE_ID)
+            if (clusterId == OTAU_CLUSTER_ID && (profileId == ZLL_PROFILE_ID || profileId == HA_PROFILE_ID))
             {
                 DBG_Printf(DBG_OTA, "otau match descriptor req, profileId 0x%04X from 0x%04X\n", profileId, ind.srcAddress().nwk());
                 sendResponse = true;

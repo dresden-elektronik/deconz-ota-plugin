@@ -91,6 +91,7 @@ public Q_SLOTS:
     void activityTimerFired();
     void markOtauActivity(const deCONZ::Address &address);
     bool otauIsActive() { return m_activityCounter > 0; }
+    void checkFileLinks();
 
 Q_SIGNALS:
     void stateChanged(int state);
