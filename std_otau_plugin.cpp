@@ -1070,8 +1070,8 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
         }
     }
 
-    if (node->hasData())
-    {
+    if (node->hasData() && !node->endDevice)
+    { // end devices must be manually enabled
         node->setPermitUpdate(true);
     }
 
@@ -1979,6 +1979,11 @@ void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoin
                 bool create = true;
                 OtauNode *otauNode = m_model->getNode(node->address(), create);
                 Q_UNUSED(otauNode);
+
+                if (otauNode)
+                {
+                    otauNode->endDevice = node->isEndDevice();
+                }
 
                 if (otauNode && otauNode->profileId != sd.profileId())
                 {

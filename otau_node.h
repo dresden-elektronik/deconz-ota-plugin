@@ -111,6 +111,7 @@ public:
     // service for model
     uint row;
     OtauModel *model;
+    bool endDevice;
 
     // TODO: getter and setter
     uint16_t apsRequestId;

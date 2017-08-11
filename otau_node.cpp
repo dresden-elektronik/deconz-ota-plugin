@@ -25,6 +25,7 @@ OtauNode::OtauNode(const deCONZ::Address &addr)
     apsRequestId = 0xff + 1; // invalid > 8-bit
     profileId = HA_PROFILE_ID;
     endpoint = 0xFF; // for unicast if endpoint not known
+    endDevice = true;
 }
 
 /*! Sets the nodes state.
