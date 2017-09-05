@@ -22,7 +22,7 @@
 #define IMG_TYPE_FLS_H3      0x0008
 
 #define MAX_RADIUS          0
-#define MAX_ASDU_SIZE 49
+#define MAX_ASDU_SIZE 45
 /*
             U8  status
             U16 manufacturerCode;
@@ -52,7 +52,7 @@
 
 #define SLOW_PAGE_SPACEING 250
 #define FAST_PAGE_SPACEING 25
-#define MIN_PAGE_SPACEING 10
+#define MIN_PAGE_SPACEING 20
 #define MAX_PAGE_SPACEING 3000
 
 #define OTAU_IMAGE_NOTIFY_CLID                 0x0201
@@ -1321,17 +1321,17 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         {
             stream << (uint8_t)OTAU_ABORT;
             node->setState(OtauNode::NodeAbort);
-            DBG_Printf(DBG_OTA, "otau send img block 0x%016LLX OTAU_ABORT\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "otau send img block 0x%016llX OTAU_ABORT\n", node->address().ext());
         }
         else if (node->state() == OtauNode::NodeAbort)
         {
             stream << (uint8_t)OTAU_ABORT;
-            DBG_Printf(DBG_OTA, "otau send img block 0x%016LLX OTAU_ABORT\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "otau send img block 0x%016llX OTAU_ABORT\n", node->address().ext());
         }
         else if (!node->permitUpdate() || !node->hasData())
         {
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-            DBG_Printf(DBG_OTA, "otau send img block 0x%016LLX OTAU_NO_IMAGE_AVAILABLE\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "otau send img block 0x%016llX OTAU_NO_IMAGE_AVAILABLE\n", node->address().ext());
         }
         else if (node->imgBlockReq.offset < (uint32_t)node->rawFile.size())
         {
@@ -1362,7 +1362,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
                 if (dataSize == 0)
                 {
                     // dont send empty block response
-                    DBG_Printf(DBG_OTA, "otau prevent img block rsp with dataSize = 0 0x%016LLX\n", node->address().ext());
+                    DBG_Printf(DBG_OTA, "otau prevent img block rsp with dataSize = 0 0x%016llX\n", node->address().ext());
                     return false;
                 }
             }
@@ -1376,7 +1376,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
 
             if (dataSize == 0)
             {
-                DBG_Printf(DBG_OTA, "otau warn img block rsp with dataSize = 0 0x%016LLX\n", node->address().ext());
+                DBG_Printf(DBG_OTA, "otau warn img block rsp with dataSize = 0 0x%016llX\n", node->address().ext());
             }
 
             stream << dataSize;
@@ -1388,7 +1388,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         }
         else
         {
-            DBG_Printf(DBG_OTA, "otau send img block  0x%016LLX OTAU_MALFORMED_COMMAND\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "otau send img block  0x%016llX OTAU_MALFORMED_COMMAND\n", node->address().ext());
             stream << (uint8_t)OTAU_MALFORMED_COMMAND;
         }
     }
@@ -1401,7 +1401,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
 
     if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == deCONZ::Success)
     {
-        DBG_Printf(DBG_OTA, "otau send img block rsp offset: 0x%08X dataSize %u 0x%016LLX\n", node->imgBlockReq.offset, dataSize, node->address().ext());
+        DBG_Printf(DBG_OTA, "otau send img block rsp offset: 0x%08X dataSize %u 0x%016llX\n", node->imgBlockReq.offset, dataSize, node->address().ext());
         node->imgBlockReq.pageBytesDone += dataSize;
         node->imgBlockReq.offset += dataSize;
         node->apsRequestId = req.id();
@@ -1574,7 +1574,7 @@ bool StdOtauPlugin::imagePageResponse(OtauNode *node)
             if (!m_imagePageTimer->isActive())
                 m_imagePageTimer->start(IMAGE_PAGE_TIMER_DELAY);
 
-            DBG_Printf(DBG_OTA, "otau wait spacing 0x%016LLX\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "otau wait spacing 0x%016llX\n", node->address().ext());
             return true;
         }
     }
