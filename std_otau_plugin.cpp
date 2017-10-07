@@ -73,6 +73,19 @@
 #define OTAU_IMAGE_TYPE_QJ_MFC_IT      0x02 // Query jitter, manufacturer code, image type
 #define OTAU_IMAGE_TYPE_QJ_MFC_IT_FV   0x03 // Query jitter, manufacturer code, image type, file version
 
+const quint64 macPrefixMask       = 0xffffff0000000000ULL;
+const quint64 bjeMacPrefix        = 0xd85def0000000000ULL;
+const quint64 emberMacPrefix      = 0x000d6f0000000000ULL;
+const quint64 tiMacPrefix         = 0x00124b0000000000ULL;
+const quint64 deMacPrefix         = 0x00212e0000000000ULL;
+const quint64 ikeaMacPrefix       = 0x000b570000000000ULL;
+const quint64 instaMacPrefix      = 0x000f170000000000ULL;
+const quint64 jennicMacPrefix     = 0x00158d0000000000ULL;
+const quint64 philipsMacPrefix    = 0x0017880000000000ULL;
+const quint64 osramMacPrefix      = 0x8418260000000000ULL;
+const quint64 ubisysMacPrefix     = 0x001fee0000000000ULL;
+const quint64 netvoxMacPrefix     = 0x00137a0000000000ULL;
+
 /*! The constructor.
  */
 StdOtauPlugin::StdOtauPlugin(QObject *parent) :
@@ -946,6 +959,23 @@ void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
 
             if (clusterId == OTAU_CLUSTER_ID && (profileId == ZLL_PROFILE_ID || profileId == HA_PROFILE_ID))
             {
+                const deCONZ::Node *coord = 0;
+                deCONZ::ApsController::instance()->getNode(0, &coord);
+
+                DBG_Assert(coord != 0);
+                if (!coord)
+                {
+                    return;
+                }
+
+                for (const deCONZ::SimpleDescriptor &sd : coord->simpleDescriptors())
+                {
+                    if (sd.profileId() == profileId)
+                    {
+                        return; // firmware will handle this
+                    }
+                }
+
                 DBG_Printf(DBG_OTA, "otau match descriptor req, profileId 0x%04X from 0x%04X\n", profileId, ind.srcAddress().nwk());
                 sendResponse = true;
                 break;
@@ -1170,6 +1200,13 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
             DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");
         }
+    }
+
+    if ((node->address().ext() & macPrefixMask) == osramMacPrefix &&
+        !(node->permitUpdate() && node->hasData()))
+    {
+        DBG_Printf(DBG_OTA, "Don't answer OSRAM node: OTAU_NO_IMAGE_AVAILABLE\n");
+        return false;
     }
 
     { // ZCL frame
