@@ -22,7 +22,8 @@
 #define IMG_TYPE_FLS_H3      0x0008
 
 #define MAX_RADIUS          0
-#define MAX_ASDU_SIZE 45
+//#define MAX_ASDU_SIZE 45
+#define MAX_ASDU_SIZE 82
 /*
             U8  status
             U16 manufacturerCode;
@@ -1330,13 +1331,13 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
     req.setClusterId(OTAU_CLUSTER_ID);
     req.dstAddress() = node->address();
     req.setDstAddressMode(deCONZ::ApsExtAddress);
-
+    //req.setTxOptions(deCONZ::ApsTxFragmentationPermitted);
     req.setSrcEndpoint(m_srcEndpoint);
     // APS ACKs are enabled for single image block requests
     // they are disabled for image page request responses
     if ((node->lastZclCmd() == OTAU_IMAGE_BLOCK_REQUEST_CMD_ID) || (node->state() == OtauNode::NodeAbort) || m_w->acksEnabled())
     {
-        req.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
+        req.setTxOptions(req.txOptions() | deCONZ::ApsTxAcknowledgedTransmission);
     }
 
     zclFrame.setSequenceNumber(node->reqSequenceNumber);
