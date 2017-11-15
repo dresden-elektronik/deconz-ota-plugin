@@ -22,8 +22,8 @@
 #define IMG_TYPE_FLS_H3      0x0008
 
 #define MAX_RADIUS          0
-//#define MAX_ASDU_SIZE 45
-#define MAX_ASDU_SIZE 82
+#define MAX_ASDU_SIZE1 45
+#define MAX_ASDU_SIZE2 82
 /*
             U8  status
             U16 manufacturerCode;
@@ -34,7 +34,7 @@
 */
 #define IMAGE_BLOCK_RSP_HEADER_SIZE (1 + 2 + 2 + 4 + 4 + 1) // 14
 #define ZCL_HEADER_SIZE (1 + 1 + 1) // frame control + seq + commandId
-#define MAX_DATA_SIZE       (MAX_ASDU_SIZE - (ZCL_HEADER_SIZE + IMAGE_BLOCK_RSP_HEADER_SIZE))
+#define MAX_DATA_SIZE       (m_maxAsduDataSize - (ZCL_HEADER_SIZE + IMAGE_BLOCK_RSP_HEADER_SIZE))
 #define MIN_RESPONSE_SPACING 20
 #define MAX_RESPONSE_SPACING 500
 #define DEFAULT_UPGRADE_TIME 5
@@ -97,6 +97,7 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     m_srcEndpoint = 0x01; // TODO: ask from controller
     m_model = new OtauModel(this);
     m_imagePageTimer = new QTimer(this);
+    m_maxAsduDataSize = MAX_ASDU_SIZE1;
 
     m_sensorActivity.invalidate();
 
@@ -1045,6 +1046,16 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     }
 
     invalidateUpdateEndRequest(node);
+    // adjust max data size based on firmware version
+    quint32 fwVersion = deCONZ::ApsController::instance()->getParameter(deCONZ::ParamFirmwareVersion);
+    if (fwVersion < 0x261a0500) // first version to support large data sized
+    {
+        m_maxAsduDataSize = MAX_ASDU_SIZE1;
+    }
+    else
+    {
+        m_maxAsduDataSize = MAX_ASDU_SIZE2;
+    }
 
     node->reqSequenceNumber = zclFrame.sequenceNumber();
     node->endpoint = ind.srcEndpoint();
