@@ -23,7 +23,8 @@
 
 #define MAX_RADIUS          0
 #define MAX_ASDU_SIZE1 45
-#define MAX_ASDU_SIZE2 82
+//#define MAX_ASDU_SIZE2 82
+#define MAX_ASDU_SIZE2 45
 /*
             U8  status
             U16 manufacturerCode;
@@ -1049,6 +1050,10 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     // adjust max data size based on firmware version
     quint32 fwVersion = deCONZ::ApsController::instance()->getParameter(deCONZ::ParamFirmwareVersion);
     if (fwVersion < 0x261a0500) // first version to support large data sized
+    {
+        m_maxAsduDataSize = MAX_ASDU_SIZE1;
+    }
+    else if ((node->address().ext() & macPrefixMask) == bjeMacPrefix)
     {
         m_maxAsduDataSize = MAX_ASDU_SIZE1;
     }
