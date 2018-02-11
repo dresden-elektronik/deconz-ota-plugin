@@ -406,6 +406,12 @@ void StdOtauWidget::updateEditor()
     }
     ui->of_descriptionEdit->setPlainText(descr);
 
+    str.sprintf("0x%04X", m_editOf.minHardwareVersion);
+    ui->of_minHwVersionEdit->setText(str);
+
+    str.sprintf("0x%04X", m_editOf.maxHardwareVersion);
+    ui->of_maxHwVersionEdit->setText(str);
+
     // standard 0
     str.sprintf("0x%08X", 0);
     ui->of_firmwareSizeEdit->setText(str);
