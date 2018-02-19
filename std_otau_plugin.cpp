@@ -1498,13 +1498,13 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
 
     if (node->state() == OtauNode::NodeAbort)
     {
-        defaultResponse(node, OTAU_ABORT);
+        defaultResponse(node, zclFrame.commandId(), OTAU_ABORT);
         return;
     }
 
     if (!m_w->pageRequestEnabled())
     {
-        defaultResponse(node, OTAU_UNSUP_CLUSTER_COMMAND);
+        defaultResponse(node, zclFrame.commandId(), OTAU_UNSUP_CLUSTER_COMMAND);
         return;
     }
 
@@ -1875,7 +1875,7 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
     return ret;
 }
 
-bool StdOtauPlugin::defaultResponse(OtauNode *node, quint8 status)
+bool StdOtauPlugin::defaultResponse(OtauNode *node, quint8 commandId, quint8 status)
 {
     deCONZ::ApsDataRequest req;
     deCONZ::ZclFrame zclFrame;
@@ -1907,6 +1907,7 @@ bool StdOtauPlugin::defaultResponse(OtauNode *node, quint8 status)
     { // ZCL payload
         QDataStream stream(&zclFrame.payload(), QIODevice::WriteOnly);
         stream.setByteOrder(QDataStream::LittleEndian);
+        stream << commandId;
         stream << status;
     }
 

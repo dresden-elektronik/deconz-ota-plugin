@@ -81,7 +81,7 @@ public Q_SLOTS:
     bool imagePageResponse(OtauNode *node);
     void upgradeEndRequest(const deCONZ::ApsDataIndication &ind, const deCONZ::ZclFrame &zclFrame);
     bool upgradeEndResponse(OtauNode *node, uint32_t upgradeTime);
-    bool defaultResponse(OtauNode *node, quint8 status);
+    bool defaultResponse(OtauNode *node, quint8 commandId, quint8 status);
     void nodeEvent(const deCONZ::NodeEvent &event);
     bool checkForUpdateImageImage(OtauNode *node, const QString &path);
     void invalidateUpdateEndRequest(OtauNode *node);
