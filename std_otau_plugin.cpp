@@ -23,8 +23,8 @@
 
 #define MAX_RADIUS          0
 #define MAX_ASDU_SIZE1 45
-//#define MAX_ASDU_SIZE2 82
 #define MAX_ASDU_SIZE2 45
+#define MAX_ASDU_SIZE3 82
 /*
             U8  status
             U16 manufacturerCode;
@@ -1056,6 +1056,10 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     else if ((node->address().ext() & macPrefixMask) == bjeMacPrefix)
     {
         m_maxAsduDataSize = MAX_ASDU_SIZE1;
+    }
+    else if ((node->address().ext() & macPrefixMask) == ubisysMacPrefix)
+    {
+        m_maxAsduDataSize = MAX_ASDU_SIZE3;
     }
     else
     {
