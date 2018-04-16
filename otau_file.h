@@ -85,6 +85,7 @@ struct OtauFile
     uint16_t maxHardwareVersion;
 
     std::list<SubElement> subElements;
+    QByteArray raw;
 };
 
 #endif // OTAU_FILE_H

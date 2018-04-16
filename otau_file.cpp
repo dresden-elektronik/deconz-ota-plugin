@@ -226,5 +226,6 @@ bool OtauFile::fromArray(const QByteArray &arr)
         }
     }
 
+    raw = arr;
     return !subElements.empty();
 }
