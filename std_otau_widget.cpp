@@ -151,6 +151,7 @@ void StdOtauWidget::fileSelectClicked()
             if (ld.readFile(path, m_ouNode->file))
             {
                 m_ouNode->setHasData(true);
+                m_ouNode->lastActivity.restart();
                 updateSettingsBox();
             }
             else
