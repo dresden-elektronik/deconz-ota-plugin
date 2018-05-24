@@ -1514,11 +1514,11 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
 
     if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
     {
-        m_w->setPacketSpacingMs(SLOW_PAGE_SPACEING); // slow down
+        m_w->setPacketSpacingMs(m_slowPageSpaceing); // slow down
     }
-    else if (m_w->packetSpacingMs() == SLOW_PAGE_SPACEING)
+    else if (m_w->packetSpacingMs() == m_slowPageSpaceing)
     {
-        m_w->setPacketSpacingMs(FAST_PAGE_SPACEING); // speed up
+        m_w->setPacketSpacingMs(m_fastPageSpaceing); // speed up
     }
     else if (m_w->packetSpacingMs() < MIN_PAGE_SPACEING)
     {
