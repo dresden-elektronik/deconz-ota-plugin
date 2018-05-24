@@ -1754,7 +1754,7 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
         return false;
     }
 
-
+/*
     if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
     {
         if (node->softwareVersion() > 0x200000D8)
@@ -1769,7 +1769,8 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
             }
         }
     }
-    else if (!m_sensorBusyRestart && m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
+    else */
+    if (!m_sensorBusyRestart && m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
     {
         upgradeTime = OTA_TIME_INFINITE; // wait
     }
