@@ -1195,9 +1195,10 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
         else if (node->manufacturerId == VENDOR_DDEL &&
                  node->imageType() == IMG_TYPE_FLS_PP3_H3 &&
                  node->softwareVersion() >= 0x20000050 &&
-                 node->softwareVersion() <= 0x20000054)
+                 node->softwareVersion() <= 0x20000054 &&
+                 node->file.fileVersion < 0x201000eb)
         {
-            // FIXME workaround to prevent update FLS-H lp
+            // workaround to prevent update FLS-H lp with older FLS-PP lp versions
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
             DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE to FLS-H lp\n");
         }
