@@ -1121,8 +1121,8 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
         }
     }
 
-    if (node->hasData() && !node->endDevice)
-    { // end devices must be manually enabled
+    if (node->hasData() && node->rxOnWhenIdle)
+    { // sleeping devices must be manually enabled
         node->setPermitUpdate(true);
     }
 
@@ -2015,8 +2015,13 @@ void StdOtauPlugin::setState(StdOtauPlugin::State state)
  */
 void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoint)
 {
-    DBG_Assert(node != 0);
+    DBG_Assert(node != nullptr);
     if (!node)
+    {
+        return;
+    }
+
+    if (node->nodeDescriptor().isNull())
     {
         return;
     }
@@ -2043,7 +2048,7 @@ void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoin
 
                 if (otauNode)
                 {
-                    otauNode->endDevice = node->isEndDevice();
+                    otauNode->rxOnWhenIdle = node->nodeDescriptor().receiverOnWhenIdle();
                 }
 
                 if (otauNode && otauNode->profileId != sd.profileId())
