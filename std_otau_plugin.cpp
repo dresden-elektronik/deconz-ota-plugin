@@ -990,7 +990,7 @@ void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
     {
         deCONZ::ApsDataRequest req;
 
-        req.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
+        //req.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
         req.dstAddress() = ind.srcAddress();
         req.setDstAddressMode(deCONZ::ApsNwkAddress);
         req.setProfileId(ZDP_PROFILE_ID);
