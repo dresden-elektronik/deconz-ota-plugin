@@ -1098,25 +1098,23 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     DBG_Printf(DBG_OTA, "otau query next img req: %s mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
                qPrintable(ind.srcAddress().toStringExt()), node->manufacturerId, node->imageType(), node->softwareVersion());
 
-    if (deCONZ::ApsController::instance()->getParameter(deCONZ::ParamOtauActive) == 0)
+    if (deCONZ::ApsController::instance()->getParameter(deCONZ::ParamOtauActive) != 0)
     {
-        return;
-    }
-
-    // check for image
-    if (!node->hasData())
-    {
-        node->file.subElements.clear();
-        node->setHasData(false);
-        node->setPermitUpdate(false);
-
-        if (!checkForUpdateImageImage(node, m_imgPath))
+        // check for image
+        if (!node->hasData())
         {
-            QString secondaryPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau";
+            node->file.subElements.clear();
+            node->setHasData(false);
+            node->setPermitUpdate(false);
 
-            if (!checkForUpdateImageImage(node, secondaryPath))
+            if (!checkForUpdateImageImage(node, m_imgPath))
             {
+                QString secondaryPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau";
 
+                if (!checkForUpdateImageImage(node, secondaryPath))
+                {
+
+                }
             }
         }
     }
