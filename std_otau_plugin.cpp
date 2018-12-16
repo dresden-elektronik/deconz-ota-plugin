@@ -14,7 +14,8 @@
 #include "otau_model.h"
 #include "deconz/aps_private.h"
 
-#define VENDOR_DDEL 0x1135
+#define VENDOR_BUSCH_JAEGER  0x112E
+#define VENDOR_DDEL          0x1135
 
 #define IMG_TYPE_FLS_PP3_H3  0x0000
 #define IMG_TYPE_FLS_NB      0x0002
@@ -1217,8 +1218,16 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
         }
         else
         {
-            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-            DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");
+            if (node->manufacturerId == VENDOR_BUSCH_JAEGER)
+            {
+                stream << (uint8_t)OTAU_ABORT;
+                DBG_Printf(DBG_OTA, "Send query next image response: OTAU_ABORT\n");
+            }
+            else
+            {
+                stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
+                DBG_Printf(DBG_OTA, "Send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");
+            }
         }
     }
 
