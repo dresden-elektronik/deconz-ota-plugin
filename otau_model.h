@@ -29,6 +29,7 @@ public:
     };
 
     explicit OtauModel(QObject *parent = 0);
+    ~OtauModel();
     int rowCount(const QModelIndex &parent) const;
     int columnCount(const QModelIndex &parent) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;

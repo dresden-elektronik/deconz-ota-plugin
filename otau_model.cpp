@@ -12,6 +12,19 @@ OtauModel::OtauModel(QObject *parent) :
 {
 }
 
+OtauModel::~OtauModel()
+{
+    for (OtauNode *&n : m_nodes)
+    {
+        if (n)
+        {
+            delete n;
+            n = nullptr;
+        }
+    }
+    m_nodes.clear();
+}
+
 /*! Returns the model rowcount.
  */
 int OtauModel::rowCount(const QModelIndex &parent) const
