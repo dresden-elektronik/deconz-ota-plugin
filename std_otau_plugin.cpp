@@ -252,7 +252,7 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
     {
         if (ind.clusterId() == ONOFF_CLUSTER_ID || ind.clusterId() == LEVEL_CLUSTER_ID)
         {
-            if (ind.dstAddressMode() == deCONZ::ApsGroupAddress)
+            if (ind.dstAddressMode() == deCONZ::ApsGroupAddress && ind.srcAddress().hasNwk() && ind.srcAddress().nwk() != 0x0000)
             {
                 // slow down activity for larger networks if sensors are active
                 if (m_model->rowCount(QModelIndex()) > m_sensorSlowdown)
