@@ -105,6 +105,7 @@ private:
     State m_state;
     quint8 m_srcEndpoint;
     int m_sensorSlowdown;
+    bool m_hasflsNb;
     StdOtauWidget *m_w;
     quint8 m_zclSeq;
     quint8 m_maxAsduDataSize;

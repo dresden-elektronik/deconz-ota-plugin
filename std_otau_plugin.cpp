@@ -101,6 +101,7 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     m_imagePageTimer = new QTimer(this);
     m_maxAsduDataSize = MAX_ASDU_SIZE1;
 
+    m_hasflsNb = false;
     m_sensorActivity.invalidate();
 
     m_imagePageTimer->setSingleShot(true);;
@@ -248,7 +249,7 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
         matchDescriptorRequest(ind);
     }
 
-    if (ind.profileId() == HA_PROFILE_ID || ind.profileId() == ZLL_PROFILE_ID)
+    if (m_hasflsNb && (ind.profileId() == HA_PROFILE_ID || ind.profileId() == ZLL_PROFILE_ID))
     {
         if (ind.clusterId() == ONOFF_CLUSTER_ID || ind.clusterId() == LEVEL_CLUSTER_ID)
         {
@@ -1094,6 +1095,11 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     else
     {
         node->setHardwareVersion(0xFFFF);
+    }
+
+    if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
+    {
+        m_hasflsNb = true;
     }
 
     DBG_Printf(DBG_OTA, "otau query next img req: %s mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
