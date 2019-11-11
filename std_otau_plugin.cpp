@@ -740,9 +740,9 @@ void StdOtauPlugin::checkFileLinks()
 
         QStringList ls = dir.entryList();
 
-        for (const QString n : ls)
+        for (const QString &n : ls)
         {
-            if (!n.endsWith(".zigbee") && !n.endsWith(".ota.signed"))
+            if (!n.endsWith(".zigbee") && !n.endsWith(".ota.signed") && !n.endsWith(".ota"))
                 continue;
 
             QFile file(path + "/" + n);

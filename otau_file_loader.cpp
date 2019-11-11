@@ -69,7 +69,7 @@ bool OtauFileLoader::readFile(const QString &path, OtauFile &of)
         of.subElements.push_back(sub);
         return true;
     }
-    else if (path.endsWith(".zigbee") || path.endsWith(".ota.signed"))
+    else if (path.endsWith(".zigbee") || path.endsWith(".ota.signed") || path.endsWith(".ota"))
     {
         return of.fromArray(arr);
     }
