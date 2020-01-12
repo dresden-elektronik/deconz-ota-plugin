@@ -105,11 +105,11 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             break;
 
         case SectionSoftwareVersion:
-            str.asprintf("0x%08X", node->softwareVersion());
+            str = QString::asprintf("0x%08X", node->softwareVersion());
             break;
 
         case SectionImageType:
-            str.asprintf("0x%04X", node->imageType());
+            str = QString::asprintf("0x%04X", node->imageType());
             break;
 
         case SectionProgress:
@@ -151,7 +151,7 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
                     }
                     else
                     {
-                        str.asprintf("%3.2f%%", ((double)node->offset() / (double)node->file.totalImageSize) * 100.0f);
+                        str = QString::asprintf("%3.2f%%", ((double)node->offset() / (double)node->file.totalImageSize) * 100.0f);
                     }
                 }
                 else
@@ -173,7 +173,7 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
         {
             int min = (node->elapsedTime() / 1000) / 60;
             int sec = (node->elapsedTime() / 1000) % 60;
-            str.asprintf("%u:%02u", min, sec);
+            str = QString::asprintf("%u:%02u", min, sec);
         }
             break;
 
@@ -205,7 +205,7 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             {
                 if ((node->address().ext() & 0x00212EFFFF000000ULL) != 0)
                 {
-                    str.asprintf("%u.%u build %u", (node->softwareVersion() & 0xF0000000U) >> 28, (node->softwareVersion() & 0x0FF00000U) >> 20, (node->softwareVersion() & 0x000FFFFFU));
+                    str = QString::asprintf("%u.%u build %u", (node->softwareVersion() & 0xF0000000U) >> 28, (node->softwareVersion() & 0x0FF00000U) >> 20, (node->softwareVersion() & 0x000FFFFFU));
                     return str;
                 }
             }

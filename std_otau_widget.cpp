@@ -217,25 +217,23 @@ void StdOtauWidget::updateSettingsBox()
 
             ui->ou_fileEdit->setText(of.path);
 
-            QString str;
-
-            str.asprintf("0x%08X", of.fileVersion);
+            QString str = QString::asprintf("0x%08X", of.fileVersion);
             ui->ou_fileVersionEdit->setText(str);
 
             QString version;
             if (of.fileVersion != 0)
             {
-                version.asprintf("%u.%u build %u", (of.fileVersion & 0xF0000000U) >> 28, (of.fileVersion & 0x0FF00000U) >> 20, (of.fileVersion & 0x000FFFFFU));
+                version = QString::asprintf("%u.%u build %u", (of.fileVersion & 0xF0000000U) >> 28, (of.fileVersion & 0x0FF00000U) >> 20, (of.fileVersion & 0x000FFFFFU));
             }
             ui->ou_fileVersionEdit->setToolTip(version);
 
-            str.asprintf("0x%04X", of.imageType);
+            str = QString::asprintf("0x%04X", of.imageType);
             ui->ou_imageTypeEdit->setText(str);
 
-            str.asprintf("0x%04X", of.manufacturerCode);
+            str = QString::asprintf("0x%04X", of.manufacturerCode);
             ui->ou_manufacturerEdit->setText(str);
 
-            str.asprintf("0x%08X (%u kB)", of.totalImageSize, of.totalImageSize / 1014);
+            str = QString::asprintf("0x%08X (%u kB)", of.totalImageSize, of.totalImageSize / 1014);
             ui->ou_SizeEdit->setText(str);
         }
         else
@@ -378,19 +376,19 @@ void StdOtauWidget::updateEditor()
 {
     QString str;
 
-    str.asprintf("0x%08X", m_editOf.fileVersion);
+    str = QString::asprintf("0x%08X", m_editOf.fileVersion);
     ui->of_FileVersionEdit->setText(str);
 
-    str.asprintf("0x%04X", m_editOf.headerVersion);
+    str = QString::asprintf("0x%04X", m_editOf.headerVersion);
     ui->of_headerVersionEdit->setText(str);
 
-    str.asprintf("0x%04X", m_editOf.imageType);
+    str = QString::asprintf("0x%04X", m_editOf.imageType);
     ui->of_imageTypeEdit->setText(str);
 
-    str.asprintf("0x%04X", m_editOf.manufacturerCode);
+    str = QString::asprintf("0x%04X", m_editOf.manufacturerCode);
     ui->of_manufacturerEdit->setText(str);
 
-    str.asprintf("0x%04X", m_editOf.zigBeeStackVersion);
+    str = QString::asprintf("0x%04X", m_editOf.zigBeeStackVersion);
     ui->of_zigbeeStackVersionEdit->setText(str);
 
     QString descr;
@@ -407,14 +405,14 @@ void StdOtauWidget::updateEditor()
     }
     ui->of_descriptionEdit->setPlainText(descr);
 
-    str.asprintf("0x%04X", m_editOf.minHardwareVersion);
+    str = QString::asprintf("0x%04X", m_editOf.minHardwareVersion);
     ui->of_minHwVersionEdit->setText(str);
 
-    str.asprintf("0x%04X", m_editOf.maxHardwareVersion);
+    str = QString::asprintf("0x%04X", m_editOf.maxHardwareVersion);
     ui->of_maxHwVersionEdit->setText(str);
 
     // standard 0
-    str.asprintf("0x%08X", 0);
+    str = QString::asprintf("0x%08X", 0);
     ui->of_firmwareSizeEdit->setText(str);
 
     {
@@ -425,7 +423,7 @@ void StdOtauWidget::updateEditor()
         {
             if (it->tag == TAG_UPGRADE_IMAGE)
             {
-                str.asprintf("0x%08X (%u kB)", it->length, it->length / 1024);
+                str = QString::asprintf("0x%08X (%u kB)", it->length, it->length / 1024);
                 ui->of_firmwareSizeEdit->setText(str);
             }
         }
