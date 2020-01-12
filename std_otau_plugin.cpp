@@ -758,7 +758,7 @@ void StdOtauPlugin::checkFileLinks()
                 continue;
 
             QString fname;
-            fname.sprintf("%04X-%04X-%08X", of.manufacturerCode, of.imageType, of.fileVersion);
+            fname.asprintf("%04X-%04X-%08X", of.manufacturerCode, of.imageType, of.fileVersion);
 
             bool ok= false;
             for (const QString &n2 : ls)
