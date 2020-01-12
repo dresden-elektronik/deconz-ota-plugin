@@ -145,7 +145,7 @@ private:
     uint16_t m_imageType;
     bool m_hasData;
     bool m_permitUpdate;
-    QTime m_time;
+    QElapsedTimer m_time;
     QTime m_lastQueryTime;
     int m_elapsedTime;
     Status m_status;
