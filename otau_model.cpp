@@ -105,11 +105,11 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             break;
 
         case SectionSoftwareVersion:
-            str = QString::asprintf("0x%08X", node->softwareVersion());
+            str = QString("0x%1").arg(node->softwareVersion(), 8, 16, QLatin1Char('0'));
             break;
 
         case SectionImageType:
-            str = QString::asprintf("0x%04X", node->imageType());
+            str = QString("0x%1").arg(node->imageType(), 4, 16, QLatin1Char('0'));
             break;
 
         case SectionProgress:
@@ -151,7 +151,7 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
                     }
                     else
                     {
-                        str = QString::asprintf("%3.2f%%", ((double)node->offset() / (double)node->file.totalImageSize) * 100.0f);
+                        str = QString("%1%").arg((static_cast<double>(node->offset()) / static_cast<double>(node->file.totalImageSize)) * 100.0, 0, 'f', 2);
                     }
                 }
                 else
@@ -173,7 +173,7 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
         {
             int min = (node->elapsedTime() / 1000) / 60;
             int sec = (node->elapsedTime() / 1000) % 60;
-            str = QString::asprintf("%u:%02u", min, sec);
+            str = QString("%1:%2").arg(min).arg(sec, 2, 10, QLatin1Char('0'));
         }
             break;
 
@@ -194,7 +194,6 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             return QVariant();
         }
 
-        QString str;
         OtauNode *node = m_nodes[index.row()];
 
         switch (index.column())
@@ -205,8 +204,10 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             {
                 if ((node->address().ext() & 0x00212EFFFF000000ULL) != 0)
                 {
-                    str = QString::asprintf("%u.%u build %u", (node->softwareVersion() & 0xF0000000U) >> 28, (node->softwareVersion() & 0x0FF00000U) >> 20, (node->softwareVersion() & 0x000FFFFFU));
-                    return str;
+                    return QString("%1.%2 build %3")
+                            .arg((node->softwareVersion() & 0xF0000000U) >> 28)
+                            .arg((node->softwareVersion() & 0x0FF00000U) >> 20)
+                            .arg((node->softwareVersion() & 0x000FFFFFU));
                 }
             }
             break;
