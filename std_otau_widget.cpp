@@ -217,7 +217,7 @@ void StdOtauWidget::updateSettingsBox()
 
             ui->ou_fileEdit->setText(of.path);
 
-            QString str = QString("0x%1").arg(of.fileVersion, 8, 16, QLatin1Char('0'));
+            QString str = QString("0x%1").arg(of.fileVersion, 8, 16, QLatin1Char('0')).toUpper();
             ui->ou_fileVersionEdit->setText(str);
 
             QString version;
@@ -227,13 +227,13 @@ void StdOtauWidget::updateSettingsBox()
             }
             ui->ou_fileVersionEdit->setToolTip(version);
 
-            str = QString("0x%1").arg(of.imageType, 4, 16, QLatin1Char('0'));
+            str = QString("0x%1").arg(of.imageType, 4, 16, QLatin1Char('0')).toUpper();
             ui->ou_imageTypeEdit->setText(str);
 
-            str = QString("0x%1").arg(of.manufacturerCode, 4, 16, QLatin1Char('0'));
+            str = QString("0x%1").arg(of.manufacturerCode, 4, 16, QLatin1Char('0')).toUpper();
             ui->ou_manufacturerEdit->setText(str);
 
-            str = QString("0x%1 (%2 kB)").arg(of.totalImageSize, 8, 16, QLatin1Char('0')).arg(of.totalImageSize / 1014);
+            str = QString("0x%1 (%2 kB)").arg(of.totalImageSize, 8, 16, QLatin1Char('0')).arg(of.totalImageSize / 1014).toUpper();
             ui->ou_SizeEdit->setText(str);
         }
         else
@@ -376,19 +376,19 @@ void StdOtauWidget::updateEditor()
 {
     QString str;
 
-    str = QString("0x%1").arg(m_editOf.fileVersion, 8, 16, QLatin1Char('0'));
+    str = QString("0x%1").arg(m_editOf.fileVersion, 8, 16, QLatin1Char('0')).toUpper();
     ui->of_FileVersionEdit->setText(str);
 
-    str = QString("0x%1").arg(m_editOf.headerVersion, 4, 16, QLatin1Char('0'));
+    str = QString("0x%1").arg(m_editOf.headerVersion, 4, 16, QLatin1Char('0')).toUpper();
     ui->of_headerVersionEdit->setText(str);
 
-    str = QString("0x%1").arg(m_editOf.imageType, 4, 16, QLatin1Char('0'));
+    str = QString("0x%1").arg(m_editOf.imageType, 4, 16, QLatin1Char('0')).toUpper();
     ui->of_imageTypeEdit->setText(str);
 
-    str = QString("0x%1").arg(m_editOf.manufacturerCode, 4, 16, QLatin1Char('0'));
+    str = QString("0x%1").arg(m_editOf.manufacturerCode, 4, 16, QLatin1Char('0')).toUpper();
     ui->of_manufacturerEdit->setText(str);
 
-    str = QString("0x%1").arg(m_editOf.zigBeeStackVersion, 4, 16, QLatin1Char('0'));
+    str = QString("0x%1").arg(m_editOf.zigBeeStackVersion, 4, 16, QLatin1Char('0')).toUpper();
     ui->of_zigbeeStackVersionEdit->setText(str);
 
     QString descr;
@@ -405,14 +405,14 @@ void StdOtauWidget::updateEditor()
     }
     ui->of_descriptionEdit->setPlainText(descr);
 
-    str = QString("0x%1").arg(m_editOf.minHardwareVersion, 4, 16, QLatin1Char('0'));
+    str = QString("0x%1").arg(m_editOf.minHardwareVersion, 4, 16, QLatin1Char('0')).toUpper();
     ui->of_minHwVersionEdit->setText(str);
 
-    str = QString("0x%1").arg(m_editOf.maxHardwareVersion, 4, 16, QLatin1Char('0'));
+    str = QString("0x%1").arg(m_editOf.maxHardwareVersion, 4, 16, QLatin1Char('0')).toUpper();
     ui->of_maxHwVersionEdit->setText(str);
 
     // standard 0
-    str = QString("0x%1").arg(0, 8, 16, QLatin1Char('0'));
+    str = QString("0x%1").arg(0, 8, 16, QLatin1Char('0')).toUpper();
     ui->of_firmwareSizeEdit->setText(str);
 
     {
@@ -423,7 +423,7 @@ void StdOtauWidget::updateEditor()
         {
             if (it->tag == TAG_UPGRADE_IMAGE)
             {
-                str = QString("0x%1 (%2 kB)").arg(it->length, 8, 16, QLatin1Char('0')).arg(it->length / 1024);
+                str = QString("0x%1 (%2 kB)").arg(it->length, 8, 16, QLatin1Char('0')).arg(it->length / 1024).toUpper();
                 ui->of_firmwareSizeEdit->setText(str);
             }
         }

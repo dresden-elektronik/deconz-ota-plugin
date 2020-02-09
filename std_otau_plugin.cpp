@@ -759,7 +759,8 @@ void StdOtauPlugin::checkFileLinks()
 
             const QString fname = QString("%1-%2-%3").arg(of.manufacturerCode, 4, 16, QLatin1Char('0'))
                                                      .arg(of.imageType, 4, 16, QLatin1Char('0'))
-                                                     .arg(of.fileVersion, 8, 16, QLatin1Char('0'));
+                                                     .arg(of.fileVersion, 8, 16, QLatin1Char('0'))
+                                                     .toUpper();
 
             bool ok= false;
             for (const QString &n2 : ls)

@@ -96,11 +96,11 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
         case SectionAddress:
             if (node->address().hasExt())
             {
-                str = node->address().toStringExt();
+                str = node->address().toStringExt().toUpper();
             }
             else if (node->address().hasNwk())
             {
-                str = node->address().toStringNwk();
+                str = node->address().toStringNwk().toUpper();
             }
             break;
 
