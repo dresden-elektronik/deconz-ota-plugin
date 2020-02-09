@@ -96,20 +96,20 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
         case SectionAddress:
             if (node->address().hasExt())
             {
-                str = node->address().toStringExt().toUpper();
+                str = "0x" + QString("%1").arg(node->address().ext(), 16, 16, QLatin1Char('0')).toUpper();
             }
             else if (node->address().hasNwk())
             {
-                str = node->address().toStringNwk().toUpper();
+                str = "0x" + QString("%1").arg(node->address().nwk(), 4, 16, QLatin1Char('0')).toUpper();
             }
             break;
 
         case SectionSoftwareVersion:
-            str = QString("0x%1").arg(node->softwareVersion(), 8, 16, QLatin1Char('0'));
+            str = "0x" + QString("%1").arg(node->softwareVersion(), 8, 16, QLatin1Char('0'));
             break;
 
         case SectionImageType:
-            str = QString("0x%1").arg(node->imageType(), 4, 16, QLatin1Char('0'));
+            str = "0x" + QString("%1").arg(node->imageType(), 4, 16, QLatin1Char('0'));
             break;
 
         case SectionProgress:
