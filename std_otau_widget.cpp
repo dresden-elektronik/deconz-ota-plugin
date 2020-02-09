@@ -2,6 +2,7 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QTimer>
+#include <QSortFilterProxyModel>
 #include <stdint.h>
 #include "deconz/crc8.h"
 #include "std_otau_widget.h"
@@ -48,10 +49,8 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
     connect(ui->openButton, SIGNAL(clicked()),
             this, SLOT(openClicked()));
 
-    // adjust columns
-    ui->tableView->resizeColumnToContents(OtauModel::SectionAddress);
-    ui->tableView->resizeColumnToContents(OtauModel::SectionSoftwareVersion);
-    ui->tableView->resizeColumnToContents(OtauModel::SectionImageType);
+    ui->tableView->setSortingEnabled(true);
+    ui->tableView->setStyleSheet("QTableView::item { border: 0px; padding-left: 2px; padding-right: 2px; padding-top: 0px; padding-bottom: 0px; }");
 }
 
 StdOtauWidget::~StdOtauWidget()
@@ -61,7 +60,26 @@ StdOtauWidget::~StdOtauWidget()
 
 void StdOtauWidget::setOtauModel(OtauModel *model)
 {
-    ui->tableView->setModel(model);
+    if (!proxyModel)
+    {
+        proxyModel = new QSortFilterProxyModel(this);
+        proxyModel->setDynamicSortFilter(true);
+    }
+
+    proxyModel->setSourceModel(model);
+    ui->tableView->setModel(proxyModel);
+
+    connect(model, &OtauModel::rowsInserted, [this, model](const QModelIndex &, int, int) {
+        if (model->rowCount(QModelIndex()) == 1)
+        {
+            // adjust columns
+            ui->tableView->resizeColumnToContents(OtauModel::SectionAddress);
+            ui->tableView->resizeColumnToContents(OtauModel::SectionSoftwareVersion);
+            ui->tableView->resizeColumnToContents(OtauModel::SectionImageType);
+        }
+
+        ui->tableView->isSortingEnabled();
+    });
 }
 
 uint StdOtauWidget::restartTime()
@@ -247,7 +265,7 @@ void StdOtauWidget::otauTableActivated(const QModelIndex &index)
 {
     if (index.isValid())
     {
-        emit activatedNodeAtRow(index.row());
+        emit activatedNodeAtRow(proxyModel->mapToSource(index).row());
     }
 }
 

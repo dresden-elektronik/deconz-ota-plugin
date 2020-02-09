@@ -15,6 +15,7 @@ struct OtauFile;
 class OtauModel;
 struct OtauNode;
 class QModelIndex;
+class QSortFilterProxyModel;
 
 class StdOtauWidget : public QWidget
 {
@@ -58,10 +59,11 @@ Q_SIGNALS:
 private:
     void updateEditor();
 
-    Ui::StdOtauWidget *ui;
+    Ui::StdOtauWidget *ui = nullptr;
+    QSortFilterProxyModel *proxyModel = nullptr;
     QString m_path;
     OtauFile m_editOf;
-    OtauNode *m_ouNode;
+    OtauNode *m_ouNode = nullptr;
 };
 
 #endif // STD_OTAU_WIDGET_H

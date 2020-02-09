@@ -311,7 +311,7 @@ void OtauModel::nodeDataUpdate(OtauNode *node)
 {
     if (node && (node->row < m_nodes.size()))
     {
-        emit dataChanged(index(node->row, 0), index(node->row, SectionCount));
+        emit dataChanged(index(node->row, 0), index(node->row, SectionCount - 1), {Qt::DisplayRole});
     }
 }
 
