@@ -204,25 +204,42 @@ bool OtauFile::fromArray(const QByteArray &arr)
         }
         stream >> sub.length;
 
+        if (sub.length > totalImageSize)
+        {
+            if (subElements.empty())
+            {
+//                DBG_Printf(DBG_OTA, "invalid length %u for tag 0x%04X total image size %u (treat hole data section as update)\n", sub.length, sub.tag, totalImageSize);
+//                sub.tag = 0;
+//                sub.length = (arr.size() - offset) - headerLength;
+//                stream.device()->seek(arr.size() - sub.length);
+            }
+            else
+            {
+                DBG_Printf(DBG_OTA, "invalid length %u for tag 0x%04X total image size %u\n", sub.length, sub.tag, totalImageSize);
+                break;
+            }
+        }
+
         while (!stream.atEnd())
         {
-            if ((uint32_t)sub.data.size() == sub.length)
+            if (sub.data.size() == static_cast<int>(sub.length))
             {
                 break;
             }
 
             uint8_t ch;
             stream >> ch;
-            sub.data.append((char)ch);
+            sub.data.append(static_cast<char>(ch));
+            Q_ASSERT(sub.data.size() <= static_cast<int>(sub.length));
         }
 
-        if ((uint32_t)sub.data.size() == sub.length)
+        if (sub.data.size() == static_cast<int>(sub.length))
         {
             subElements.push_back(sub);
         }
         else
         {
-            DBG_Printf(DBG_INFO_L2, "sub element size does not match real size\n");
+            DBG_Printf(DBG_OTA, "sub.data.size %d does not match expected size %u\n", sub.data.size(), sub.length);
         }
     }
 
