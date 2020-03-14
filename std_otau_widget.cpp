@@ -4,7 +4,6 @@
 #include <QTimer>
 #include <QSortFilterProxyModel>
 #include <stdint.h>
-#include "deconz/crc8.h"
 #include "std_otau_widget.h"
 #include "std_otau_plugin.h"
 #include "otau_file_loader.h"
