@@ -1,7 +1,16 @@
-include(../../../compile.pri)
-
 TARGET   = std_otau_plugin
-include(../common.pri)
+
+TARGET = $$qtLibraryTarget($$TARGET)
+
+DEFINES += DECONZ_DLLSPEC=Q_DECL_IMPORT
+
+unix:contains(QMAKE_HOST.arch, armv6l) {
+    DEFINES += ARCH_ARM ARCH_ARMV6
+}
+
+win32:LIBS+=  -L../.. -ldeCONZ1
+unix:LIBS+=  -L../.. -ldeCONZ
+win32:CONFIG += dll
 
 TEMPLATE        = lib
 CONFIG         += plugin \
