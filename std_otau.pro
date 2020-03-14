@@ -35,7 +35,6 @@ HEADERS  = std_otau_plugin.h \
 
 SOURCES  = std_otau_plugin.cpp \
            std_otau_widget.cpp \
-           ../../deconz/crc8.c \
            otau_file.cpp \
            otau_file_loader.cpp \
            otau_model.cpp \

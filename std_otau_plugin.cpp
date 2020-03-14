@@ -4,7 +4,6 @@
 #include <QtPlugin>
 #include <QTimer>
 #include <stdint.h>
-#include "deconz/crc8.h"
 #include "deconz/buffer_helper.h"
 #include "std_otau_plugin.h"
 #include "std_otau_widget.h"
