@@ -4,14 +4,12 @@
 #include <QtPlugin>
 #include <QTimer>
 #include <stdint.h>
-#include "deconz/buffer_helper.h"
 #include "std_otau_plugin.h"
 #include "std_otau_widget.h"
 #include "otau_file.h"
 #include "otau_file_loader.h"
 #include "otau_node.h"
 #include "otau_model.h"
-#include "deconz/aps_private.h"
 
 #define VENDOR_BUSCH_JAEGER  0x112E
 #define VENDOR_DDEL          0x1135
