@@ -1,0 +1,7 @@
+Makefile
+Makefile.Debug
+debug
+Makefile.Release
+release
+ui_std_otau_widget.h
+.qmake.stash
