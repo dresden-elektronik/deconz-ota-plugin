@@ -6,7 +6,7 @@ See the [Phoscon help topics](https://phoscon.de/en/support#ota-update-osram-dev
 
 Note that after the firmware has upgraded, the deCONZ GUI (and the REST API) might still show the old values (notably the _SW Build ID_ and _Date Code_).
 To refresh these, read the _Basic_ cluster attributes, in the _Cluster info_ panel in the GUI.
-Likewise, if the device exposes new of different endpoints and/or clusters (e.g. when upgrading from ZLL to ZigBee 3.0), refresh these by reading the _Node Descriptor_ and _Simple Descriptor(s)_ from the left drop-down menu on the node.
+Likewise, if the device exposes new or different endpoints and/or clusters (e.g. when upgrading from ZLL to ZigBee 3.0), refresh these by reading the _Node Descriptor_ and _Simple Descriptor(s)_ from the left drop-down menu on the node.
 
 ZigBee firmware is identified by the _Manufacturer Code_, _Image Code_ and _Version_.
 On startup, the STD OTAU plugin will read all `*.ota`, `*.ota.signed`, `*.sbl-ota`, and `*.zigbee` files in `~/otau`, and copy them to _mmmm_`_`_iiii_`_`_vvvvvvvv_`.zigbee` files, matching these attributes.
