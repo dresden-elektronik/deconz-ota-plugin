@@ -35,8 +35,8 @@ ubisys | 10F2 | Published to the [ubisys website](http://www.ubisys.de/en/suppor
 
 Signify don't provide their firmware for use with other ZigBee gateways than the Hue bridge.
 The communication between the bridge and the server hosting the firmware files is encrypted, so we cannot get an overview of the files available.
-To find the firmware files, you need to sniff the Internet traffic from the Hue bridge when it downloads them.
-Unfortunately, the bridge will only download files for connected devices with out of date firmware.
+To find the firmware files, you need to sniff the traffic from the Hue bridge to the Internet, as it downloads the files.
+Unfortunately, the bridge will only download firmware files for connected devices with outdated firmware.
 For details, see [issue #270](https://github.com/dresden-elektronik/deconz-rest-plugin/issues/270) in the REST API plugin repository.
 
 Below is an overview of the images found so far:
