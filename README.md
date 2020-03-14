@@ -55,3 +55,6 @@ Image | Device(s) | Firmware | Works
 
 Basically, the deCONZ STD OTAU plugin uses the same setup as the [deCONZ REST API plugin](https://github.com/dresden-elektronik/deconz-rest-plugin).
 To compile and install the STD OTAU plugin, follow the instructions to compile and install the REST API plugin, substituting the repository in step 1 with this one.
+
+## Troubleshooting
+Start deCONZ with `--dbg-ota=1` to make the STD OTAU plugin issue debug messages.
