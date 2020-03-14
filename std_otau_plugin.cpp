@@ -92,7 +92,7 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     QObject(parent)
 {
     m_state = StateEnabled;
-    m_w = 0;
+    m_w = nullptr;
     m_srcEndpoint = 0x01; // TODO: ask from controller
     m_model = new OtauModel(this);
     m_imagePageTimer = new QTimer(this);
@@ -101,7 +101,7 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     m_hasflsNb = false;
     m_sensorActivity.invalidate();
 
-    m_imagePageTimer->setSingleShot(true);;
+    m_imagePageTimer->setSingleShot(true);
     m_imagePageTimer->setInterval(IMAGE_PAGE_TIMER_DELAY);
 
     connect(m_imagePageTimer, SIGNAL(timeout()),
@@ -157,7 +157,7 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     }
 
     // slow page spacing
-    bool ok = false;;
+    bool ok = false;
     m_slowPageSpaceing = SLOW_PAGE_SPACEING;
     if (config.contains("otau/slow-page-spacing"))
     {
@@ -604,7 +604,7 @@ void StdOtauPlugin::imagePageTimerFired()
 
     for (; i != end; ++i)
     {
-        DBG_Assert(*i != 0);
+        DBG_Assert(*i != nullptr);
         OtauNode *node = *i;
         if (!node)
             continue;
@@ -826,8 +826,8 @@ bool StdOtauPlugin::imageNotify(ImageNotifyReq *notf)
             QDataStream stream(&zclFrame.payload(), QIODevice::WriteOnly);
             stream.setByteOrder(QDataStream::LittleEndian);
 
-            stream << (uint8_t)0x00; // query jitter
-            stream << (uint8_t)100; // query jitter value
+            stream << static_cast<quint8>(0x00); // query jitter
+            stream << static_cast<quint8>(100); // query jitter value
         }
 
         { // ZCL frame
@@ -922,7 +922,7 @@ void StdOtauPlugin::unicastUpgradeEndRequest(const deCONZ::Address &addr)
     {
         OtauNode *node = m_model->getNode(addr);
 
-        DBG_Assert(node != 0);
+        DBG_Assert(node != nullptr);
         if (node)
         {
             if (!upgradeEndResponse(node, DEFAULT_UPGRADE_TIME))
@@ -964,10 +964,10 @@ void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
 
             if (clusterId == OTAU_CLUSTER_ID && (profileId == ZLL_PROFILE_ID || profileId == HA_PROFILE_ID))
             {
-                const deCONZ::Node *coord = 0;
+                const deCONZ::Node *coord = nullptr;
                 deCONZ::ApsController::instance()->getNode(0, &coord);
 
-                DBG_Assert(coord != 0);
+                DBG_Assert(coord != nullptr);
                 if (!coord)
                 {
                     return;
@@ -1441,10 +1441,10 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
             }
 
             // truncate datasize if not enough data is left
-            uint32_t avail = (uint32_t)node->rawFile.size() - offset;
+            uint32_t avail = static_cast<quint32>(node->rawFile.size()) - offset;
             if (avail < dataSize)
             {
-                dataSize = avail;
+                dataSize = static_cast<quint8>(avail);
             }
 
             if (dataSize == 0)
@@ -1608,7 +1608,7 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
  */
 bool StdOtauPlugin::imagePageResponse(OtauNode *node)
 {
-    DBG_Assert(node != 0);
+    DBG_Assert(node != nullptr);
     if (!node)
     {
         return false;
@@ -1637,7 +1637,7 @@ bool StdOtauPlugin::imagePageResponse(OtauNode *node)
     {
         quint16 spacing = node->imgBlockReq.responseSpacing;
 
-        spacing = m_w->packetSpacingMs();
+        spacing = static_cast<quint16>(m_w->packetSpacingMs());
 
         if (node->lastResponseTime.isValid() &&
             !node->lastResponseTime.hasExpired(spacing))
@@ -1655,7 +1655,7 @@ bool StdOtauPlugin::imagePageResponse(OtauNode *node)
     int succ = 0;
     for (int i = 0; i < 1; i++)
     {
-        if ((int)node->imgBlockReq.offset >= node->rawFile.size())
+        if (static_cast<int>(node->imgBlockReq.offset) >= node->rawFile.size())
         {
             node->setState(OtauNode::NodeWaitNextRequest);
             return true;
@@ -1973,7 +1973,7 @@ QWidget *StdOtauPlugin::createWidget()
 {
     if (!m_w)
     {
-        m_w = new StdOtauWidget(0);
+        m_w = new StdOtauWidget(nullptr);
 
         connect(m_w, SIGNAL(unicastImageNotify(deCONZ::Address)),
                 this, SLOT(unicastImageNotify(deCONZ::Address)));
@@ -2000,7 +2000,7 @@ QWidget *StdOtauPlugin::createWidget()
  */
 QDialog *StdOtauPlugin::createDialog()
 {
-    return 0;
+    return nullptr;
 }
 
 /*! Returns the name of this plugin.
@@ -2058,7 +2058,7 @@ void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoin
                 // create node if not exist
                 bool create = true;
                 OtauNode *otauNode = m_model->getNode(node->address(), create);
-                Q_UNUSED(otauNode);
+                Q_UNUSED(otauNode)
 
                 if (otauNode)
                 {

@@ -20,7 +20,7 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
     ui->setupUi(this);
 
     // OTAU update tab
-    m_ouNode = 0;
+    m_ouNode = nullptr;
 
     connect(ui->ou_queryButton, SIGNAL(clicked()),
             this, SLOT(queryClicked()));
@@ -286,11 +286,11 @@ void StdOtauWidget::saveClicked()
         ui->fileNameLabel->setText(m_path);
     }
 
-    m_editOf.fileVersion = ui->of_FileVersionEdit->text().toUInt(0, 16);
-    m_editOf.headerVersion = ui->of_headerVersionEdit->text().toUShort(0, 16);
-    m_editOf.imageType = ui->of_imageTypeEdit->text().toUShort(0, 16);
-    m_editOf.manufacturerCode = ui->of_manufacturerEdit->text().toUShort(0, 16);
-    m_editOf.zigBeeStackVersion = ui->of_zigbeeStackVersionEdit->text().toUShort(0, 16);
+    m_editOf.fileVersion = ui->of_FileVersionEdit->text().toUInt(nullptr, 16);
+    m_editOf.headerVersion = ui->of_headerVersionEdit->text().toUShort(nullptr, 16);
+    m_editOf.imageType = ui->of_imageTypeEdit->text().toUShort(nullptr, 16);
+    m_editOf.manufacturerCode = ui->of_manufacturerEdit->text().toUShort(nullptr, 16);
+    m_editOf.zigBeeStackVersion = ui->of_zigbeeStackVersionEdit->text().toUShort(nullptr, 16);
 
     // TODO: description
 
@@ -413,7 +413,7 @@ void StdOtauWidget::updateEditor()
     {
         if (isprint(m_editOf.headerString[i]))
         {
-            descr.append((char)m_editOf.headerString[i]);
+            descr.append(static_cast<char>(m_editOf.headerString[i]));
         }
         else
         {
