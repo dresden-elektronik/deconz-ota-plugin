@@ -739,7 +739,7 @@ void StdOtauPlugin::checkFileLinks()
 
         for (const QString &n : ls)
         {
-            if (!n.endsWith(".zigbee") && !n.endsWith(".ota.signed") && !n.endsWith(".ota"))
+            if (!n.endsWith(".zigbee") && !n.endsWith(".ota.signed") && !n.endsWith(".ota") && !n.endsWith(".sbl-ota"))
                 continue;
 
             QFile file(path + "/" + n);
@@ -751,6 +751,7 @@ void StdOtauPlugin::checkFileLinks()
                 continue;
 
             OtauFile of;
+            of.path = n;
             if (!of.fromArray(arr))
                 continue;
 
@@ -772,7 +773,7 @@ void StdOtauPlugin::checkFileLinks()
             if (ok)
                 continue;
 
-            DBG_Printf(DBG_INFO, "create %s\n", qPrintable(fname));
+            DBG_Printf(DBG_INFO, "OTAU: create %s.zigbee\n", qPrintable(fname));
             file.copy(path + "/" + fname + ".zigbee");
         }
     }
@@ -1058,7 +1059,8 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     {
         m_maxAsduDataSize = MAX_ASDU_SIZE1;
     }
-    else if ((node->address().ext() & macPrefixMask) == ubisysMacPrefix)
+    else if ((node->address().ext() & macPrefixMask) == ubisysMacPrefix ||
+             (node->address().ext() & macPrefixMask) == philipsMacPrefix)
     {
         m_maxAsduDataSize = MAX_ASDU_SIZE3;
     }
