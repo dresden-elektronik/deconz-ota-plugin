@@ -49,7 +49,9 @@ Image | Device(s) | Firmware | Works
 0109 | Hue dimmer switch | [6.1.1.28573](http://fds.dc1.philips.com/firmware/ZGB_100B_0109/1107324829/Switch-ATmega_6.1.1.28573_0012.sbl-ota) |
 010C | Gamut-C _Extended color light_<br>_Color temperature light_ | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16783874/100B-010C-01001A02-ConfLight-Lamps_0012.zigbee) | Y
 010D | Hue motion sensor | [6.1.1.27575](http://fds.dc1.philips.com/firmware/ZGB_100B_010D/1107323831/Sensor-ATmega_6.1.1.27575_0012.sbl-ota) |
-0116 | Hue button | 2.30.0_r30777
+010E | Aurelle Panels, Signes, Playbar, Being White Ambiance | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010E/16783620/100B-010E-01001904-ConfLight-ModuLum_0012.zigbee) | Y
+0114 | Bluetooth GU10 | [1.55.7_r28193](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780032/100B-0114-01000B00-ConfLightBLE-Lamps-EFR32MG21.zigbee) |
+0116 | Hue button | 2.30.0_r30777 |
 
 ## Installation
 
