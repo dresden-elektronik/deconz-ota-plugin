@@ -54,11 +54,14 @@ QVariant OtauModel::headerData(int section, Qt::Orientation orientation, int rol
         case SectionAddress:
             return tr("Address");
 
-        case SectionSoftwareVersion:
-            return tr("Version");
+        case SectionManufacturer:
+            return tr("Mf");
 
         case SectionImageType:
             return tr("Image");
+
+        case SectionSoftwareVersion:
+            return tr("Version");
 
         case SectionProgress:
             return tr("Progress");
@@ -104,12 +107,17 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             }
             break;
 
-        case SectionSoftwareVersion:
-            str = "0x" + QString("%1").arg(node->softwareVersion(), 8, 16, QLatin1Char('0'));
+        case SectionManufacturer:
+            str = "0x" + QString("%1").arg(node->manufacturerId, 4, 16, QLatin1Char('0'));
             break;
+
 
         case SectionImageType:
             str = "0x" + QString("%1").arg(node->imageType(), 4, 16, QLatin1Char('0'));
+            break;
+
+        case SectionSoftwareVersion:
+            str = "0x" + QString("%1").arg(node->softwareVersion(), 8, 16, QLatin1Char('0'));
             break;
 
         case SectionProgress:
@@ -221,8 +229,9 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
         switch (index.column())
         {
         case SectionAddress:
-        case SectionSoftwareVersion:
+        case SectionManufacturer:
         case SectionImageType:
+        case SectionSoftwareVersion:
         {
             QFont font("Monospace");
             font.setStyleHint(QFont::TypeWriter);
