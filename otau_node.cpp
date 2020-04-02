@@ -24,6 +24,7 @@ OtauNode::OtauNode(const deCONZ::Address &addr)
     m_status = StatusSuccess;
     apsRequestId = 0xff + 1; // invalid > 8-bit
     profileId = HA_PROFILE_ID;
+    manufacturerId = 0;
     endpoint = 0xFF; // for unicast if endpoint not known
     rxOnWhenIdle = true;
 }

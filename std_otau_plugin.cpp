@@ -431,7 +431,7 @@ void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
  */
 void StdOtauPlugin::nodeEvent(const deCONZ::NodeEvent &event)
 {
-    if (!event.node())
+    if (event.event() != deCONZ::NodeEvent::NodeDeselected && !event.node())
     {
         return;
     }
@@ -439,6 +439,35 @@ void StdOtauPlugin::nodeEvent(const deCONZ::NodeEvent &event)
     if (event.event() == deCONZ::NodeEvent::UpdatedSimpleDescriptor)
     {
         checkIfNewOtauNode(event.node(), event.endpoint());
+    }
+    else if (event.event() == deCONZ::NodeEvent::NodeSelected)
+    {
+        nodeSelected(event.node());
+    }
+    else if (event.event() == deCONZ::NodeEvent::NodeDeselected)
+    {
+        m_w->clearNode();
+    }
+    else if (event.event() == deCONZ::NodeEvent::NodeRemoved)
+    {
+        // TODO: Remove node from model and tableview
+    }
+}
+
+void StdOtauPlugin::nodeSelected(const deCONZ::Node *node)
+{
+    if (!m_model || m_model->nodes().empty())
+    {
+        return;
+    }
+    OtauNode *otauNode = m_model->getNode(node->address());
+    if (otauNode != nullptr)
+    {
+        m_w->displayNode(otauNode, m_model->index(otauNode->row, 0));
+    }
+    else
+    {
+        m_w->clearNode();
     }
 }
 

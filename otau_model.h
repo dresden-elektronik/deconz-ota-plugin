@@ -19,8 +19,9 @@ public:
     enum Section
     {
         SectionAddress = 0,
-        SectionSoftwareVersion,
+        SectionManufacturer,
         SectionImageType,
+        SectionSoftwareVersion,
         SectionProgress,
         SectionDuration,
 //        SectionStatus,
@@ -40,7 +41,7 @@ public:
     void nodeDataUpdate(OtauNode *node);
     std::vector<OtauNode *> &nodes();
 signals:
-    
+
 public slots:
 private:
     std::vector<OtauNode*> m_nodes;

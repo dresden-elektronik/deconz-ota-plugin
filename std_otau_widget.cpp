@@ -73,11 +73,16 @@ void StdOtauWidget::setOtauModel(OtauModel *model)
         {
             // adjust columns
             ui->tableView->resizeColumnToContents(OtauModel::SectionAddress);
-            ui->tableView->resizeColumnToContents(OtauModel::SectionSoftwareVersion);
+            ui->tableView->resizeColumnToContents(OtauModel::SectionManufacturer);
             ui->tableView->resizeColumnToContents(OtauModel::SectionImageType);
+            ui->tableView->resizeColumnToContents(OtauModel::SectionSoftwareVersion);
+            ui->tableView->resizeColumnToContents(OtauModel::SectionProgress);
+            ui->tableView->resizeColumnToContents(OtauModel::SectionDuration);
         }
 
         ui->tableView->isSortingEnabled();
+        ui->tableView->sortByColumn(0, Qt::AscendingOrder);
+
     });
 }
 
@@ -221,6 +226,7 @@ void StdOtauWidget::clearSettingsBox()
     ui->ou_fileVersionEdit->setText("0x00000000");
     ui->ou_fileVersionEdit->setToolTip(QString());
     ui->ou_imageTypeEdit->setText("0x0000");
+    ui->ou_manufacturerEdit->setText("0x0000");
     ui->ou_SizeEdit->setText("0x00000000");
 }
 
@@ -385,8 +391,18 @@ void StdOtauWidget::displayNode(OtauNode *node)
         ui->lastQueryLabel->setText(tr("None"));
         clearSettingsBox();
     }
+}
 
+void StdOtauWidget::displayNode(OtauNode *node, const QModelIndex &index)
+{
+    ui->tableView->selectRow(proxyModel->mapFromSource(index).row());
+    displayNode(node);
+}
 
+void StdOtauWidget::clearNode()
+{
+    ui->tableView->clearSelection();
+    displayNode(nullptr);
 }
 
 void StdOtauWidget::updateEditor()

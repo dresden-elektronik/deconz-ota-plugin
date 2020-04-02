@@ -20,7 +20,7 @@ class QSortFilterProxyModel;
 class StdOtauWidget : public QWidget
 {
     Q_OBJECT
-    
+
 public:
     explicit StdOtauWidget(QWidget *parent);
     ~StdOtauWidget();
@@ -49,6 +49,8 @@ public Q_SLOTS:
     void saveAsClicked();
     void openClicked();
     void displayNode(OtauNode *node);
+    void displayNode(OtauNode *node, const QModelIndex &index);
+    void clearNode();
 
 Q_SIGNALS:
     void broadcastImageNotify();
