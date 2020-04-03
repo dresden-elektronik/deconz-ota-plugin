@@ -55,7 +55,7 @@ QVariant OtauModel::headerData(int section, Qt::Orientation orientation, int rol
             return tr("Address");
 
         case SectionManufacturer:
-            return tr("Mf");
+            return tr("Vendor");
 
         case SectionImageType:
             return tr("Image");
@@ -67,7 +67,7 @@ QVariant OtauModel::headerData(int section, Qt::Orientation orientation, int rol
             return tr("Progress");
 
         case SectionDuration:
-            return tr("Duration");
+            return tr("Time");
 
 //        case SectionStatus:
 //            return tr("Status");
