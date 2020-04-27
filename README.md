@@ -41,17 +41,17 @@ For details, see [issue #270](https://github.com/dresden-elektronik/deconz-rest-
 
 Below is an overview of the images found so far:
 
-Image | Device(s) | Firmware | Works
--- | -- | -- | --
-0103 | Gamut-A _Color light_ | 5.127.1.26581
-0104 | Gamut-B _Extended color light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0104/1107326256/ConnectedLamp-Atmel_0104_5.130.1.30000_0012.sbl-ota) | Y
-0105 | _Dimmable light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0105/1107326256/WhiteLamp-Atmel-Target_0105_5.130.1.30000_0012.sbl-ota) | Y
-0109 | Hue dimmer switch | [6.1.1.28573](http://fds.dc1.philips.com/firmware/ZGB_100B_0109/1107324829/Switch-ATmega_6.1.1.28573_0012.sbl-ota) |
-010C | Gamut-C _Extended color light_<br>_Color temperature light_ | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16783874/100B-010C-01001A02-ConfLight-Lamps_0012.zigbee) | Y
-010D | Hue motion sensor | [6.1.1.27575](http://fds.dc1.philips.com/firmware/ZGB_100B_010D/1107323831/Sensor-ATmega_6.1.1.27575_0012.sbl-ota) |
-010E | Aurelle Panels, Signes, Playbar, Being White Ambiance | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010E/16783620/100B-010E-01001904-ConfLight-ModuLum_0012.zigbee) | Y
-0114 | Bluetooth GU10 | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780032/100B-0114-01000B00-ConfLightBLE-Lamps-EFR32MG21.zigbee) |
-0116 | Hue button | 2.30.0_r30777 |
+Image | ModelId | Device(s) | Firmware | Works
+-- | -- | -- | -- | --
+0103 | | Gamut-A _Color light_ | 5.127.1.26581
+0104 | LST002 | Gamut-B _Extended color light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0104/1107326256/ConnectedLamp-Atmel_0104_5.130.1.30000_0012.sbl-ota) | Y
+0105 | LCT007 | _Dimmable light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0105/1107326256/WhiteLamp-Atmel-Target_0105_5.130.1.30000_0012.sbl-ota) | Y
+0109 | RWL020 | Hue dimmer switch | [6.1.1.28573](http://fds.dc1.philips.com/firmware/ZGB_100B_0109/1107324829/Switch-ATmega_6.1.1.28573_0012.sbl-ota) |
+010C | | Gamut-C _Extended color light_<br>_Color temperature light_ | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16783874/100B-010C-01001A02-ConfLight-Lamps_0012.zigbee) | Y
+010D | SML001 | Hue motion sensor | [6.1.1.27575](http://fds.dc1.philips.com/firmware/ZGB_100B_010D/1107323831/Sensor-ATmega_6.1.1.27575_0012.sbl-ota) |
+010E | LTW013 | Aurelle Panels, Signes, Playbar, Being White Ambiance | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010E/16783620/100B-010E-01001904-ConfLight-ModuLum_0012.zigbee) | Y
+0114 | | Bluetooth GU10 | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780032/100B-0114-01000B00-ConfLightBLE-Lamps-EFR32MG21.zigbee) |
+0116 | | Hue button | 2.30.0_r30777 |
 
 ## Installation
 
