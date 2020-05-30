@@ -51,7 +51,7 @@ Image | Device(s) | Firmware | Works
 010D | Hue motion sensor | [6.1.1.27575](http://fds.dc1.philips.com/firmware/ZGB_100B_010D/1107323831/Sensor-ATmega_6.1.1.27575_0012.sbl-ota) |
 010E | Aurelle Panels, Signes, Playbar, Being White Ambiance | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010E/16783620/100B-010E-01001904-ConfLight-ModuLum_0012.zigbee) | Y
 0112 | Hue White Bluetooth E27 | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16782592/100B-0112-01001500-ConfLightBLE-Lamps-EFR32MG13.zigbee) | Y
-0114 | Bluetooth GU10 | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780032/100B-0114-01000B00-ConfLightBLE-Lamps-EFR32MG21.zigbee) |
+0114 | Bluetooth GU10 | [1.65.11_hB798F2B](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780804/100B-0114-01000E04-ConfLightBLE-Lamps-EFR32MG21.zigbee) |
 0116 | Hue button | 2.30.0_r30777 |
 
 ## Installation
