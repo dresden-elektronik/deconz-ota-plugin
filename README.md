@@ -38,7 +38,7 @@ Signify don't provide their firmware for use with other ZigBee gateways than the
 The communication between the bridge and the server hosting the firmware files is encrypted, so we cannot get an overview of the files available.
 To find the firmware files, you need to sniff the traffic from the Hue bridge to the Internet, as it downloads the files.
 Unfortunately, the bridge will only download firmware files for connected devices with outdated firmware.
-For details, see [issue #10](https://github.com/dresden-elektronik/deconz-ota-plugin/issues/10) in the REST API plugin repository.
+For details, see [issue #10](https://github.com/dresden-elektronik/deconz-ota-plugin/issues/10).
 
 Below is an overview of the images found so far:
 
