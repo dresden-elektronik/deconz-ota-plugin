@@ -32,6 +32,8 @@ Lutron | 1144 | The firmware for the Aurora Friends-of-Hue dimmer is available t
 Philips (Signify) | 100B | See [Hue Firmware](#hue-firmware) below.
 ubisys | 10F2 | Published to the [ubisys website](http://www.ubisys.de/en/support/firmware/).
 
+See the [Wiki](https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/OTA-Image-Types---Firmware-versions) for a community-maintained list of firmware files, including reports which files have actually been tested.
+
 #### Hue Firmware
 
 Signify don't provide their firmware for use with other ZigBee gateways than the Hue bridge.
