@@ -28,7 +28,7 @@ Manufacturer | Code | Firmware Files
 -- | -- | --
 IKEA | 117C | Available on the [IKEA website](http://fw.ota.homesmart.ikea.net/feed/version_info.json).  Use the [ikea-ota-download.py](https://github.com/dresden-elektronik/deconz-rest-plugin/blob/master/ikea-ota-download.py) script to download the current IKEA firmware files directly to `~/otou`.
 Ledvance<br>OSRAM | 1189<br>110C | Published to the [Ledvance website](https://update.ledvance.com/firmware-overview?submit=all).
-Lutron | 1144 | The firmware for the Aurora Friends-of-Hue dimmer is available through Hue firmware.
+Lutron | 1144 | The firmware for the Aurora Friends-of-Hue dimmer is available through [Hue Firmware](#hue-firmware).
 Philips (Signify) | 100B | See [Hue Firmware](#hue-firmware) below.
 ubisys | 10F2 | Published to the [ubisys website](http://www.ubisys.de/en/support/firmware/).
 
