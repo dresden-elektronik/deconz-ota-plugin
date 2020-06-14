@@ -28,6 +28,7 @@ Manufacturer | Code | Firmware Files
 -- | -- | --
 IKEA | 117C | Available on the [IKEA website](http://fw.ota.homesmart.ikea.net/feed/version_info.json).  Use the [ikea-ota-download.py](https://github.com/dresden-elektronik/deconz-rest-plugin/blob/master/ikea-ota-download.py) script to download the current IKEA firmware files directly to `~/otou`.
 Ledvance<br>OSRAM | 1189<br>110C | Published to the [Ledvance website](https://update.ledvance.com/firmware-overview?submit=all).
+Lutron | 1144 | The firmware for the Aurora Friends-of-Hue dimmer is available through Hue firmware.
 Philips (Signify) | 100B | See [Hue Firmware](#hue-firmware) below.
 ubisys | 10F2 | Published to the [ubisys website](http://www.ubisys.de/en/support/firmware/).
 
@@ -41,17 +42,26 @@ For details, see [issue #270](https://github.com/dresden-elektronik/deconz-rest-
 
 Below is an overview of the images found so far:
 
-Image | Device(s) | Firmware | Works
--- | -- | -- | --
-0103 | Gamut-A _Color light_ | 5.127.1.26581
-0104 | Gamut-B _Extended color light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0104/1107326256/ConnectedLamp-Atmel_0104_5.130.1.30000_0012.sbl-ota) | Y
-0105 | _Dimmable light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0105/1107326256/WhiteLamp-Atmel-Target_0105_5.130.1.30000_0012.sbl-ota) | Y
-0109 | Hue dimmer switch | [6.1.1.28573](http://fds.dc1.philips.com/firmware/ZGB_100B_0109/1107324829/Switch-ATmega_6.1.1.28573_0012.sbl-ota) |
-010C | Gamut-C _Extended color light_<br>_Color temperature light_ | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16783874/100B-010C-01001A02-ConfLight-Lamps_0012.zigbee) | Y
-010D | Hue motion sensor | [6.1.1.27575](http://fds.dc1.philips.com/firmware/ZGB_100B_010D/1107323831/Sensor-ATmega_6.1.1.27575_0012.sbl-ota) |
-010E | Aurelle Panels, Signes, Playbar, Being White Ambiance | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010E/16783620/100B-010E-01001904-ConfLight-ModuLum_0012.zigbee) | Y
-0114 | Bluetooth GU10 | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780032/100B-0114-01000B00-ConfLightBLE-Lamps-EFR32MG21.zigbee) |
-0116 | Hue button | 2.30.0_r30777 |
+Image | Device(s) | Firmware
+-- | -- | --
+0100 | _unknown_ | [5.127.1.26581](http://fds.dc1.philips.com/firmware/ZGB_100B_0100/1107322837/TI_0100_5.127.1.26581_0012.sbl-ota)
+0103 | Gamut-A _Color light_ | [5.127.1.26581](http://fds.dc1.philips.com/firmware/ZGB_100B_0103/1107322837/LivCol_0103_5.127.1.26581_0012.sbl-ota)
+0104 | Gamut-B _Extended color light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0104/1107326256/ConnectedLamp-Atmel_0104_5.130.1.30000_0012.sbl-ota)
+0105 | _Dimmable light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0105/1107326256/WhiteLamp-Atmel-Target_0105_5.130.1.30000_0012.sbl-ota)
+0108 | _unknown_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0108/1107326256/LivingColors-Target_0108_5.130.1.30000_0012.sbl-ota)
+0109 | Hue dimmer switch | [6.1.1.28573](http://fds.dc1.philips.com/firmware/ZGB_100B_0109/1107324829/Switch-ATmega_6.1.1.28573_0012.sbl-ota)
+010B | _unknown_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16783874/100B-010C-01001A02-ConfLight-Lamps_0012.zigbee)
+010C | Gamut-C _Extended color light_<br>_Color temperature light_ | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16783874/100B-010C-01001A02-ConfLight-Lamps_0012.zigbee)
+010D | Hue motion sensor | [6.1.1.27575](http://fds.dc1.philips.com/firmware/ZGB_100B_010D/1107323831/Sensor-ATmega_6.1.1.27575_0012.sbl-ota)
+010E | Aurelle Panels, Signes, Playbar, Being White Ambiance | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010E/16783620/100B-010E-01001904-ConfLight-ModuLum_0012.zigbee)
+010F | Led strip (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_010F/16779778/100B-010F-01000A02-ConfLight-LedStrips_0012.zigbee)
+0110 | _unknown_ | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0110/16782848/100B-0110-01001600-ConfLight-Lamps-EFR32MG13.zigbee)
+0111 | _unknown_ | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0111/16782848/100B-0111-01001600-ConfLight-ModuLum-EFR32MG13.zigbee)
+0112 | _unknown_ | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16782592/100B-0112-01001500-ConfLightBLE-Lamps-EFR32MG13.zigbee)
+0114 | Bluetooth GU10 | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780032/100B-0114-01000B00-ConfLightBLE-Lamps-EFR32MG21.zigbee)
+0115 | Smart Plug | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16779264/100B-0115-01000800-SmartPlug-EFR32MG13.zigbee)
+0116 | Hue button | [2.30.0_r30777](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33562112/100B-0116-02001E00-Switch-EFR32MG13.zigbee)
+0000 | Lutron Aurora | [3.4](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3040/Superman_v3_04_Release_3040.ota)
 
 ## Installation
 
