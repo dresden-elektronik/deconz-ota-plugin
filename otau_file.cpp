@@ -247,6 +247,14 @@ bool OtauFile::fromArray(const QByteArray &arr)
         {
             DBG_Printf(DBG_OTA, "OTAU:   offset %6u: ignore tag 0x%04X with invalid length\n", start, sub.tag);
         }
+
+        // Total data process = totalImageSize, skip next segments, used only for legrand ATM
+        if ((manufacturerCode == 0x1021) && (processedLength == totalImageSize))
+        {
+            DBG_Printf(DBG_OTA, "OTAU:   Total Image size reached, skip next segments\n");
+            break;
+        }
+
     }
     if (!stream.atEnd())
     {
