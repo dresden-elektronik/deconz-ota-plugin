@@ -63,6 +63,7 @@ Image | Device(s) | Firmware
 0114 | Bluetooth GU10 | [1.65.11_hB798F2BF](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780804/100B-0114-01000E04-ConfLightBLE-Lamps-EFR32MG21.zigbee)
 0115 | Hue smart plug | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16779264/100B-0115-01000800-SmartPlug-EFR32MG13.zigbee)
 0116 | Hue smart button | [2.30.0_r30777](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33562112/100B-0116-02001E00-Switch-EFR32MG13.zigbee)
+0119 | Hue dimmer switch (2021) | 2.42.0_h1F5E860
 0000 | Lutron Aurora<br>_Manufacturer Code_: 1144 | [3.8](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3080/Superman_v3_08_ProdKey_3080.ota)
 
 ## Installation
