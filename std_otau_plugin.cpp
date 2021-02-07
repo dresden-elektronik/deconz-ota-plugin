@@ -1089,7 +1089,8 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
         m_maxAsduDataSize = MAX_ASDU_SIZE1;
     }
     else if ((node->address().ext() & macPrefixMask) == ubisysMacPrefix ||
-             (node->address().ext() & macPrefixMask) == philipsMacPrefix)
+             (node->address().ext() & macPrefixMask) == philipsMacPrefix ||
+             (node->address().ext() & macPrefixMask) == jennicMacPrefix)
     {
         m_maxAsduDataSize = MAX_ASDU_SIZE3;
     }
@@ -1240,11 +1241,13 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
         else if (node->permitUpdate() && node->hasData())
         {
             node->rawFile = node->file.toArray();
-            stream << (uint8_t)OTAU_SUCCESS;
-            stream << node->file.manufacturerCode;
-            stream << node->file.imageType;
+            stream << (uint8_t) OTAU_SUCCESS;
+            stream << node->patchedManufacturerCode();
+            stream << node->patchedImageType();
             stream << node->file.fileVersion;
             stream << node->file.totalImageSize;
+            DBG_Printf(DBG_OTA, "Send query next image response: OTAU_SUCCESS mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
+                       node->patchedManufacturerCode(), node->patchedImageType(), node->file.fileVersion);
 
             markOtauActivity(node->address());
             if (node->address().ext() == m_activityAddress.ext())
@@ -1418,8 +1421,8 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         stream.setByteOrder(QDataStream::LittleEndian);
 
         if ((node->imgBlockReq.fileVersion != node->file.fileVersion) ||
-            (node->imgBlockReq.imageType != node->file.imageType) ||
-            (node->imgBlockReq.manufacturerCode != node->file.manufacturerCode))
+            (node->imgBlockReq.imageType != node->patchedImageType()) ||
+            (node->imgBlockReq.manufacturerCode != node->patchedManufacturerCode()))
         {
             stream << (uint8_t)OTAU_ABORT;
             node->setState(OtauNode::NodeAbort);
@@ -1449,8 +1452,8 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
             uint32_t offset = node->imgBlockReq.offset;
 
             stream << (uint8_t)OTAU_SUCCESS;
-            stream << node->file.manufacturerCode;
-            stream << node->file.imageType;
+            stream << node->patchedManufacturerCode();
+            stream << node->patchedImageType();
             stream << node->file.fileVersion;
             stream << node->imgBlockReq.offset;
 

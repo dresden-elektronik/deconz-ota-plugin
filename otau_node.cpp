@@ -172,3 +172,21 @@ QString OtauNode::statusString() const
 
     return "Unknown";
 }
+
+/*! Dirty hack needed for Eurotronic Spirit
+ */
+bool OtauNode::needPatch()
+{
+  return manufacturerId == 0xFFFF && imageType() == 0xFFFF && softwareVersion() == 0xFFFFFFFF &&
+         file.manufacturerCode == 0x1037 && file.imageType == 0x110C;
+}
+
+uint16_t OtauNode::patchedManufacturerCode()
+{
+    return needPatch() ? manufacturerId : file.manufacturerCode;
+}
+
+uint16_t OtauNode::patchedImageType()
+{
+    return needPatch() ? imageType() : file.imageType;
+}

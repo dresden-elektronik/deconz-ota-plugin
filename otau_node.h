@@ -107,6 +107,9 @@ public:
     void setLastZclCommand(uint8_t commandId);
     uint8_t lastZclCmd() const;
     const QTime &lastQueryTime() const { return m_lastQueryTime; }
+    bool needPatch();
+    uint16_t patchedManufacturerCode();
+    uint16_t patchedImageType();
 
     // service for model
     uint row;
