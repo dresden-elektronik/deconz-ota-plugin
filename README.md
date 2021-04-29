@@ -31,6 +31,7 @@ Ledvance<br>OSRAM | 1189<br>110C | Published to the [Ledvance website](https://u
 Lutron | 1144 | The firmware for the Aurora Friends-of-Hue dimmer is available through [Hue Firmware](#hue-firmware).
 Philips (Signify) | 100B | See [Hue Firmware](#hue-firmware) below.
 ubisys | 10F2 | Published to the [ubisys website](http://www.ubisys.de/en/support/firmware/).
+Danfoss | 1246 | Published to the [Danfoss website](https://www.danfoss.com/en/products/dhs/smart-heating/smart-heating/danfoss-ally/danfoss-ally-support/).
 
 See the [Wiki](https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/OTA-Image-Types---Firmware-versions) for a community-maintained list of firmware files, including reports which files have actually been tested.
 
