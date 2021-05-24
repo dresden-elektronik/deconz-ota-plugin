@@ -86,6 +86,24 @@ const quint64 osramMacPrefix      = 0x8418260000000000ULL;
 const quint64 ubisysMacPrefix     = 0x001fee0000000000ULL;
 const quint64 netvoxMacPrefix     = 0x00137a0000000000ULL;
 
+const deCONZ::SimpleDescriptor *getSimpleDescriptor(const deCONZ::Node *node, quint8 ep)
+{
+    if (!node)
+    {
+        return nullptr;
+    }
+
+    const auto i = std::find_if(node->simpleDescriptors().cbegin(), node->simpleDescriptors().cend(),
+                                [ep](const deCONZ::SimpleDescriptor &sd){ return sd.endpoint() == ep; });
+
+    if (i != node->simpleDescriptors().cend())
+    {
+        return &*i;
+    }
+
+    return nullptr;
+}
+
 /*! The constructor.
  */
 StdOtauPlugin::StdOtauPlugin(QObject *parent) :
@@ -2069,16 +2087,16 @@ void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoin
         return;
     }
 
-    deCONZ::SimpleDescriptor sd;
+    const deCONZ::SimpleDescriptor *sd = getSimpleDescriptor(node, endpoint);
 
-    if (node->copySimpleDescriptor(endpoint, &sd) != 0)
+    if (!sd)
     {
         return;
     }
 
     {
-        QList<deCONZ::ZclCluster>::const_iterator i = sd.outClusters().begin();
-        QList<deCONZ::ZclCluster>::const_iterator end = sd.outClusters().end();
+        auto i = sd->outClusters().cbegin();
+        const auto end = sd->outClusters().cend();
         for (; i != end; ++i)
         {
             // okay has server image notify cluster
@@ -2087,25 +2105,23 @@ void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoin
                 // create node if not exist
                 bool create = true;
                 OtauNode *otauNode = m_model->getNode(node->address(), create);
-                Q_UNUSED(otauNode)
 
                 if (otauNode)
                 {
                     otauNode->rxOnWhenIdle = node->nodeDescriptor().receiverOnWhenIdle();
                 }
 
-                if (otauNode && otauNode->profileId != sd.profileId())
+                if (otauNode && otauNode->profileId != sd->profileId())
                 {
-
                     uint16_t profileId = 0;
 
-                    if (sd.profileId() == ZLL_PROFILE_ID)
+                    if (sd->profileId() == ZLL_PROFILE_ID)
                     {
                         profileId = HA_PROFILE_ID;
                     }
                     else
                     {
-                        profileId = sd.profileId();
+                        profileId = sd->profileId();
                     }
 
                     if (profileId != otauNode->profileId)
@@ -2114,7 +2130,6 @@ void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoin
                         otauNode->profileId = profileId;
                     }
                 }
-
 
                 return;
             }
