@@ -31,6 +31,7 @@ Ledvance<br>OSRAM | 1189<br>110C | Published to the [Ledvance website](https://u
 Lutron | 1144 | The firmware for the Aurora Friends-of-Hue dimmer is available through [Hue Firmware](#hue-firmware).
 Philips (Signify) | 100B | See [Hue Firmware](#hue-firmware) below.
 ubisys | 10F2 | Published to the [ubisys website](http://www.ubisys.de/en/support/firmware/).
+Danfoss | 1246 | Published to the [Danfoss website](https://www.danfoss.com/en/products/dhs/smart-heating/smart-heating/danfoss-ally/danfoss-ally-support/).
 
 See the [Wiki](https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/OTA-Image-Types---Firmware-versions) for a community-maintained list of firmware files, including reports which files have actually been tested.
 
@@ -59,11 +60,16 @@ Image | Device(s) | Firmware
 010F | Outdoor led strip (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_010F/16779778/100B-010F-01000A02-ConfLight-LedStrips_0012.zigbee)
 0110 | Bluetooth light (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0110/16782848/100B-0110-01001600-ConfLight-Lamps-EFR32MG13.zigbee)
 0111 | Hue Go (2nd Gen) | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0111/16782848/100B-0111-01001600-ConfLight-ModuLum-EFR32MG13.zigbee)
-0112 | Bluetooth E27 | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16782592/100B-0112-01001500-ConfLightBLE-Lamps-EFR32MG13.zigbee)
-0114 | Bluetooth GU10 | [1.65.11_hB798F2BF](http://fds.dc1.philips.com/firmware/ZGB_100B_0114/16780804/100B-0114-01000E04-ConfLightBLE-Lamps-EFR32MG21.zigbee)
-0115 | Hue smart plug | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16779264/100B-0115-01000800-SmartPlug-EFR32MG13.zigbee)
+0112 | Bluetooth E27 | [1.76.10](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16784128/100B-0112-01001B00-ConfLightBLE-Lamps-EFR32MG13.zigbee)
+0114 | Bluetooth GU10 | [1.76.11](https://firmware.meethue.com/storage/100b-114/16782344/94b9903a-8b42-4e40-905b-7863d9eca38e/100B-0114-01001408-ConfLightBLE-Lamps-EFR32MG21.zigbee)
+0115 | Hue smart plug | [1.76.10](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16780032/100B-0115-01000B00-SmartPlug-EFR32MG13.zigbee)
 0116 | Hue smart button | [2.30.0_r30777](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33562112/100B-0116-02001E00-Switch-EFR32MG13.zigbee)
-0000 | Lutron Aurora<br>_Manufacturer Code_: 1144 | [3.8](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3080/Superman_v3_08_ProdKey_3080.ota)
+0117 | Hue Lightstrip Plus v4 | [1.76.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0117/16780288/100B-0117-01000C00-ConfLightBLE-ModuLum-EFR32MG21.zigbee)
+0119 | Hue dimmer switch (2021) | 2.42.0_h1F5E860
+011c | Hue wall switch module | 1.0.3
+0000 | Lutron Aurora<br>_Manufacturer Code_: 1144 | [3.4](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3040/Superman_v3_04_Release_3040.ota)<br>[3.8](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3080/Superman_v3_08_ProdKey_3080.ota)*
+
+\* Note that the Lutron Aurora firmware v3.8 doesn't work with deCONZ.
 
 ## Installation
 
