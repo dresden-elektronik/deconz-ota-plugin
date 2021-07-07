@@ -74,17 +74,19 @@
 #define OTAU_IMAGE_TYPE_QJ_MFC_IT_FV   0x03 // Query jitter, manufacturer code, image type, file version
 
 const quint64 macPrefixMask       = 0xffffff0000000000ULL;
-const quint64 bjeMacPrefix        = 0xd85def0000000000ULL;
+
 const quint64 emberMacPrefix      = 0x000d6f0000000000ULL;
-const quint64 tiMacPrefix         = 0x00124b0000000000ULL;
-const quint64 deMacPrefix         = 0x00212e0000000000ULL;
 const quint64 ikeaMacPrefix       = 0x000b570000000000ULL;
 const quint64 instaMacPrefix      = 0x000f170000000000ULL;
-const quint64 jennicMacPrefix     = 0x00158d0000000000ULL;
-const quint64 philipsMacPrefix    = 0x0017880000000000ULL;
-const quint64 osramMacPrefix      = 0x8418260000000000ULL;
-const quint64 ubisysMacPrefix     = 0x001fee0000000000ULL;
+const quint64 tiMacPrefix         = 0x00124b0000000000ULL;
 const quint64 netvoxMacPrefix     = 0x00137a0000000000ULL;
+const quint64 jennicMacPrefix     = 0x00158d0000000000ULL;
+const quint64 develcoMacPrefix    = 0x0015bc0000000000ULL;
+const quint64 philipsMacPrefix    = 0x0017880000000000ULL;
+const quint64 ubisysMacPrefix     = 0x001fee0000000000ULL;
+const quint64 deMacPrefix         = 0x00212e0000000000ULL;
+const quint64 osramMacPrefix      = 0x8418260000000000ULL;
+const quint64 bjeMacPrefix        = 0xd85def0000000000ULL;
 
 const deCONZ::SimpleDescriptor *getSimpleDescriptor(const deCONZ::Node *node, quint8 ep)
 {
@@ -1108,6 +1110,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     }
     else if ((node->address().ext() & macPrefixMask) == ubisysMacPrefix ||
              (node->address().ext() & macPrefixMask) == philipsMacPrefix ||
+             (node->address().ext() & macPrefixMask) == develcoMacPrefix ||
              (node->address().ext() & macPrefixMask) == jennicMacPrefix)
     {
         m_maxAsduDataSize = MAX_ASDU_SIZE3;
