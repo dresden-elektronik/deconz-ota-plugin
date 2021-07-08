@@ -125,7 +125,7 @@ void StdOtauWidget::updateClicked()
     {
         if (!apsCtrl->setParameter(deCONZ::ParamOtauActive, 1))
         {
-            DBG_Printf(DBG_OTA, "failed to enable otau server\n");
+            DBG_Printf(DBG_OTA, "OTAU: failed to enable otau server\n");
         }
     }
 
