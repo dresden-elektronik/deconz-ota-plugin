@@ -20,9 +20,10 @@
 #define IMG_TYPE_FLS_H3      0x0008
 
 #define MAX_RADIUS          0
-#define MAX_ASDU_SIZE1 45
-#define MAX_ASDU_SIZE2 45
-#define MAX_ASDU_SIZE3 82
+#define MAX_ASDU_SIZE       82
+// #define MAX_ASDU_SIZE1 45
+// #define MAX_ASDU_SIZE2 45
+// #define MAX_ASDU_SIZE3 82
 /*
             U8  status
             U16 manufacturerCode;
@@ -60,11 +61,11 @@
 
 const quint64 macPrefixMask       = 0xffffff0000000000ULL;
 
-const quint64 develcoMacPrefix    = 0x0015bc0000000000ULL;
-const quint64 philipsMacPrefix    = 0x0017880000000000ULL;
-const quint64 ubisysMacPrefix     = 0x001fee0000000000ULL;
+// const quint64 develcoMacPrefix    = 0x0015bc0000000000ULL;
+// const quint64 philipsMacPrefix    = 0x0017880000000000ULL;
+// const quint64 ubisysMacPrefix     = 0x001fee0000000000ULL;
 const quint64 osramMacPrefix      = 0x8418260000000000ULL;
-const quint64 bjeMacPrefix        = 0xd85def0000000000ULL;
+// const quint64 bjeMacPrefix        = 0xd85def0000000000ULL;
 
 const deCONZ::SimpleDescriptor *getSimpleDescriptor(const deCONZ::Node *node, quint8 ep)
 {
@@ -94,7 +95,8 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     m_srcEndpoint = 0x01; // TODO: ask from controller
     m_model = new OtauModel(this);
     m_imagePageTimer = new QTimer(this);
-    m_maxAsduDataSize = MAX_ASDU_SIZE1;
+    m_maxAsduDataSize = MAX_ASDU_SIZE;
+    // m_maxAsduDataSize = MAX_ASDU_SIZE1;
 
     m_hasflsNb = false;
     m_sensorActivity.invalidate();
@@ -1076,26 +1078,26 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     }
 
     invalidateUpdateEndRequest(node);
-    // adjust max data size based on firmware version
-    quint32 fwVersion = deCONZ::ApsController::instance()->getParameter(deCONZ::ParamFirmwareVersion);
-    if (fwVersion < 0x261a0500) // first version to support large data sized
-    {
-        m_maxAsduDataSize = MAX_ASDU_SIZE1;
-    }
-    else if ((node->address().ext() & macPrefixMask) == bjeMacPrefix)
-    {
-        m_maxAsduDataSize = MAX_ASDU_SIZE1;
-    }
-    else if ((node->address().ext() & macPrefixMask) == ubisysMacPrefix ||
-             (node->address().ext() & macPrefixMask) == philipsMacPrefix ||
-             (node->address().ext() & macPrefixMask) == develcoMacPrefix)
-    {
-        m_maxAsduDataSize = MAX_ASDU_SIZE3;
-    }
-    else
-    {
-        m_maxAsduDataSize = MAX_ASDU_SIZE2;
-    }
+    // // adjust max data size based on firmware version
+    // quint32 fwVersion = deCONZ::ApsController::instance()->getParameter(deCONZ::ParamFirmwareVersion);
+    // if (fwVersion < 0x261a0500) // first version to support large data sized
+    // {
+    //     m_maxAsduDataSize = MAX_ASDU_SIZE1;
+    // }
+    // else if ((node->address().ext() & macPrefixMask) == bjeMacPrefix)
+    // {
+    //     m_maxAsduDataSize = MAX_ASDU_SIZE1;
+    // }
+    // else if ((node->address().ext() & macPrefixMask) == ubisysMacPrefix ||
+    //          (node->address().ext() & macPrefixMask) == philipsMacPrefix ||
+    //          (node->address().ext() & macPrefixMask) == develcoMacPrefix)
+    // {
+    //     m_maxAsduDataSize = MAX_ASDU_SIZE3;
+    // }
+    // else
+    // {
+    //     m_maxAsduDataSize = MAX_ASDU_SIZE2;
+    // }
 
     node->reqSequenceNumber = zclFrame.sequenceNumber();
     node->endpoint = ind.srcEndpoint();
