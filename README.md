@@ -4,6 +4,9 @@ The deCONZ STD OTAU plugin implements a ZigBee Over-the-Air-Upgrade (OTAU) serve
 ## Upgrading Firmware
 See the [Phoscon help topics](https://phoscon.de/en/support#ota-update-osram-devices) for instructions on how to upgrade the firmware of your ZigBee devices using the STD OTAU plugin.
 
+_Make sure the source routing beta feature is disabled, before attempting a firmware upgrade.
+When source routing is enabled, the upgrade of ubisys, Hue, and Develco devices might hang._
+
 Note that after the firmware has upgraded, the deCONZ GUI (and the REST API) might still show the old values (notably the _SW Build ID_ and _Date Code_).
 To refresh these, read the _Basic_ cluster attributes, in the _Cluster info_ panel in the GUI.
 Likewise, if the device exposes new or different endpoints and/or clusters (e.g. when upgrading from ZLL to ZigBee 3.0), refresh these by reading the _Node Descriptor_ and _Simple Descriptor(s)_ from the left drop-down menu on the node.
