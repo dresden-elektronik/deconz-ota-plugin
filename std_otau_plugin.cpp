@@ -20,7 +20,7 @@
 #define IMG_TYPE_FLS_H3      0x0008
 
 #define MAX_RADIUS          0
-#define MAX_ASDU_SIZE       82
+#define MAX_ASDU_SIZE       82  // FIXME: must be lower when source routing is enabled.
 // #define MAX_ASDU_SIZE1 45
 // #define MAX_ASDU_SIZE2 45
 // #define MAX_ASDU_SIZE3 82
