@@ -20,7 +20,24 @@
 #define IMG_TYPE_FLS_H3      0x0008
 
 #define MAX_RADIUS          0
-#define MAX_ASDU_SIZE       82  // FIXME: must be lower when source routing is enabled.
+#define MAX_ASDU_SIZE       82
+/* Source routing adds additional bytes to the NWK header, reducing the ASDU size.
+      U8  relay count
+      U8  relay index
+      U16 relay 1
+      U16 relay 2
+      ...
+      U16 relay n
+  By default, maximum hops is set to 5.
+  Ideally, the core would report whether source routing is enabled, and the value of max hops.
+  For now, we count the number of consecutive NO_ACK errors to try and detect source routing.
+*/
+#define SOURCE_ROUTING_MAX_HOPS 5
+#define SOURCE_ROUTING_SIZE     (1 + 1 + (2 * SOURCE_ROUTING_MAX_HOPS))
+#define MAX_SAFE_ASDU_SIZE      (MAX_ASDU_SIZE - SOURCE_ROUTING_SIZE)
+#define NO_ACK                  0xA7
+#define NO_ACK_THRESHOLD        3
+
 // #define MAX_ASDU_SIZE1 45
 // #define MAX_ASDU_SIZE2 45
 // #define MAX_ASDU_SIZE3 82
@@ -96,6 +113,7 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     m_model = new OtauModel(this);
     m_imagePageTimer = new QTimer(this);
     m_maxAsduDataSize = MAX_ASDU_SIZE;
+    m_nNoAckErrors = 0;
     // m_maxAsduDataSize = MAX_ASDU_SIZE1;
 
     m_hasflsNb = false;
@@ -402,6 +420,20 @@ void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
             if (conf.status() != deCONZ::ApsSuccessStatus)
             {
                 DBG_Printf(DBG_OTA, "OTAU: aps conf failed status 0x%02X\n", conf.status());
+                // FIXME hack to detect source routing
+                if (conf.status() == NO_ACK)
+                {
+                    if (++m_nNoAckErrors > NO_ACK_THRESHOLD)
+                    {
+                        m_maxAsduDataSize = MAX_SAFE_ASDU_SIZE;
+                        DBG_Printf(DBG_OTA, "OTAU: reducing max data size to %d\n", MAX_DATA_SIZE);
+                    }
+                }
+                else
+                {
+                    m_nNoAckErrors = 0;
+                }
+                // End FIXME
                 //node->setState(OtauNode::NodeError);
             }
             else
