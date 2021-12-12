@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>OTA Update</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
    <property name="spacing">
@@ -232,7 +232,7 @@
          <item row="2" column="1">
           <widget class="QSpinBox" name="restartAfterUpgradeSpinBox">
            <property name="enabled">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="suffix">
             <string> s</string>
@@ -254,7 +254,7 @@
             <string/>
            </property>
            <property name="minimum">
-            <number>15</number>
+            <number>4</number>
            </property>
            <property name="maximum">
             <number>8000</number>

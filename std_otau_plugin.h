@@ -21,6 +21,8 @@
 #define OTAU_UPGRADE_END_REQUEST_CMD_ID        0x06
 #define OTAU_UPGRADE_END_RESPONSE_CMD_ID       0x07
 
+#define OTAU_MAX_ACTIVE 4
+
 /*! Otau ZCL status codes. */
 typedef enum
 {
@@ -40,6 +42,12 @@ class StdOtauWidget;
 struct OtauNode;
 struct ImageNotifyReq;
 class OtauModel;
+
+struct OtauTracker
+{
+    uint64_t extAddr;
+    deCONZ::SteadyTimeRef lastActivity;
+};
 
 class StdOtauPlugin : public QObject,
                      public deCONZ::NodeInterface
@@ -86,12 +94,10 @@ public Q_SLOTS:
     void nodeSelected(const deCONZ::Node *node);
     bool checkForUpdateImageImage(OtauNode *node, const QString &path);
     void invalidateUpdateEndRequest(OtauNode *node);
-    void delayedImageNotify();
     void imagePageTimerFired();
     void cleanupTimerFired();
     void activityTimerFired();
     void markOtauActivity(const deCONZ::Address &address);
-    bool otauIsActive() { return m_activityCounter > 0; }
     void checkFileLinks();
 
 Q_SIGNALS:
@@ -114,8 +120,9 @@ private:
     QTimer *m_imagePageTimer;
     QTimer *m_cleanupTimer;
     QTimer *m_activityTimer;
-    int m_activityCounter;
-    deCONZ::Address m_activityAddress;
+    std::vector<OtauTracker> m_otauTracker;
+    //int m_activityCounter;
+    //deCONZ::Address m_activityAddress;
     QElapsedTimer m_sensorActivity;
     int m_fastPageSpaceing;
     int m_slowPageSpaceing;

@@ -1,12 +1,15 @@
 #ifndef OTAU_NODE_H
 #define OTAU_NODE_H
 
+#include <array>
 #include <QTime>
 #include <QElapsedTimer>
 #include "deconz/types.h"
 #include "deconz/aps.h"
+#include "deconz/timeref.h"
 
 #define NODE_TIMEOUT        10000
+#define MAX_ACTIVE_BLOCK_REQUESTS 9
 
 struct OtauFile;
 class OtauModel;
@@ -32,6 +35,13 @@ struct ImageBlockReq
     uint16_t pageBytesDone;
     uint16_t pageSize;
     uint16_t responseSpacing;
+};
+
+struct ImageBlockReqTrack
+{
+    deCONZ::SteadyTimeRef sendTime;
+    uint8_t apsRequestId;
+    uint8_t retry;
 };
 
 struct UpgradeEndReq
@@ -117,6 +127,7 @@ public:
     uint16_t apsRequestId;
     uint8_t zclCommandId; // last send ZCL command id
     uint8_t endpoint;
+    uint8_t endpointNotify;
     uint8_t reqSequenceNumber;
     uint16_t profileId;
     uint16_t manufacturerId;
@@ -134,6 +145,8 @@ public:
     UpgradeEndReq upgradeEndReq;
     int imgPageRequestRetry;
     int imgBlockResponseRetry;
+
+    std::array<ImageBlockReqTrack, MAX_ACTIVE_BLOCK_REQUESTS> imgBlockTrack{};
 
 private:
     deCONZ::Address m_addr;

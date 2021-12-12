@@ -32,10 +32,9 @@
   Ideally, the core would report whether source routing is enabled, and the value of max hops.
   For now, we count the number of consecutive NO_ACK errors to try and detect source routing.
 */
-#define SOURCE_ROUTING_MAX_HOPS 5
+#define SOURCE_ROUTING_MAX_HOPS 7
 #define SOURCE_ROUTING_SIZE     (1 + 1 + (2 * SOURCE_ROUTING_MAX_HOPS))
 #define MAX_SAFE_ASDU_SIZE      (MAX_ASDU_SIZE - SOURCE_ROUTING_SIZE)
-#define NO_ACK                  0xA7
 #define NO_ACK_THRESHOLD        3
 
 // #define MAX_ASDU_SIZE1 45
@@ -58,7 +57,7 @@
 #define CLEANUP_TIMER_DELAY  (3 * 60 * 1000)
 #define CLEANUP_DELAY        (4 * 60 * 60 * 1000)
 #define IMAGE_PAGE_TIMER_DELAY 10
-#define ACTIVITY_TIMER_DELAY  1000
+#define ACTIVITY_TIMER_DELAY  3000
 #define MAX_ACTIVITY   120 // hits 0 after 5 seconds
 #define MAX_IMG_PAGE_REQ_RETRY   5
 #define MAX_IMG_BLOCK_RSP_RETRY   10
@@ -132,7 +131,6 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     connect(m_cleanupTimer, SIGNAL(timeout()),
             this, SLOT(cleanupTimerFired()));
 
-    m_activityCounter = 0;
     m_activityTimer = new QTimer(this);
     m_activityTimer->setSingleShot(false);
 
@@ -156,11 +154,11 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 
     deCONZ::ApsController *apsCtrl = deCONZ::ApsController::instance();
 
-    connect(apsCtrl, SIGNAL(apsdeDataConfirm(const deCONZ::ApsDataConfirm&)),
-            this, SLOT(apsdeDataConfirm(const deCONZ::ApsDataConfirm&)));
+    connect(apsCtrl, SIGNAL(apsdeDataConfirm(deCONZ::ApsDataConfirm)),
+            this, SLOT(apsdeDataConfirm(deCONZ::ApsDataConfirm)));
 
-    connect(apsCtrl, SIGNAL(apsdeDataIndication(const deCONZ::ApsDataIndication&)),
-            this, SLOT(apsdeDataIndication(const deCONZ::ApsDataIndication&)));
+    connect(apsCtrl, SIGNAL(apsdeDataIndication(deCONZ::ApsDataIndication)),
+            this, SLOT(apsdeDataIndication(deCONZ::ApsDataIndication)));
 
     connect(apsCtrl, SIGNAL(nodeEvent(deCONZ::NodeEvent)),
             this, SLOT(nodeEvent(deCONZ::NodeEvent)));
@@ -351,12 +349,8 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
         return;
     }
 
-    if (otauIsActive() && node->address().ext() != m_activityAddress.ext())
-    {
-        return;
-    }
-
-    node->lastActivity.restart();
+    node->lastActivity.invalidate();
+    node->lastActivity.start();
     if (!zclFrame.isDefaultResponse())
     {
         node->setLastZclCommand(zclFrame.commandId());
@@ -416,14 +410,17 @@ void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
         {
             node->apsRequestId = INVALID_APS_REQ_ID;
 
-            // wait for next query
             if (conf.status() != deCONZ::ApsSuccessStatus)
             {
                 DBG_Printf(DBG_OTA, "OTAU: aps conf failed status 0x%02X\n", conf.status());
                 // FIXME hack to detect source routing
-                if (conf.status() == NO_ACK)
+                // note that no ack doesn't always refer to source routing but this provides a safe fallback
+                if (conf.status() == deCONZ::ApsNoAckStatus)
                 {
-                    if (++m_nNoAckErrors > NO_ACK_THRESHOLD)
+                    if (++m_nNoAckErrors > NO_ACK_THRESHOLD ||
+                        (node->zclCommandId == OTAU_IMAGE_BLOCK_RESPONSE_CMD_ID &&
+                         node->imgBlockReq.offset == 0)
+                       )
                     {
                         m_maxAsduDataSize = MAX_SAFE_ASDU_SIZE;
                         DBG_Printf(DBG_OTA, "OTAU: reducing max data size to %d\n", MAX_DATA_SIZE);
@@ -434,28 +431,33 @@ void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
                     m_nNoAckErrors = 0;
                 }
                 // End FIXME
-                //node->setState(OtauNode::NodeError);
             }
             else
             {
                 node->refreshTimeout();
+
+                if (node->zclCommandId == OTAU_IMAGE_BLOCK_RESPONSE_CMD_ID)
+                {
+                    node->imgBlockReq.pageBytesDone += node->imgBlockReq.maxDataSize;
+                    node->imgBlockReq.offset += node->imgBlockReq.maxDataSize;
+                    node->reqSequenceNumber++;
+
+                    if (node->state() == OtauNode::NodeWaitPageSpacing)
+                    {
+                        imagePageResponse(node);
+                    }
+                }
             }
 
-            if (node->lastZclCmd() == OTAU_IMAGE_PAGE_REQUEST_CMD_ID)
-            {
-                //imagePageResponse(node);
-            }
-            else if (node->zclCommandId == OTAU_UPGRADE_END_RESPONSE_CMD_ID)
+            if (node->zclCommandId == OTAU_UPGRADE_END_RESPONSE_CMD_ID)
             {
                 if (conf.status() == deCONZ::ApsSuccessStatus)
                 {
                     node->setHasData(false);
-//                        invalidateUpdateEndRequest(node);
                 }
             }
         }
     }
-
 }
 
 /*! Handler for node events.
@@ -541,8 +543,8 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node, const QString &path
 
     QStringList ls = dir.entryList();
 
-    QStringList::const_iterator i = ls.begin();
-    QStringList::const_iterator end = ls.end();
+    auto i = ls.begin();
+    auto end = ls.end();
 
     for (; i != end; ++i)
     {
@@ -630,14 +632,6 @@ void StdOtauPlugin::invalidateUpdateEndRequest(OtauNode *node)
     }
 }
 
-/*! Timer callback to send a delayed image notify request.
- */
-void StdOtauPlugin::delayedImageNotify()
-{
-    unicastImageNotify(m_delayedImageNotifyAddr);
-    m_delayedImageNotifyAddr.clear();
-}
-
 /*! Handler to automatically send image page responses.
  */
 void StdOtauPlugin::imagePageTimerFired()
@@ -658,15 +652,10 @@ void StdOtauPlugin::imagePageTimerFired()
         return;
     }
 
-    std::vector<OtauNode*>::iterator i = m_model->nodes().begin();
-    std::vector<OtauNode*>::iterator end = m_model->nodes().end();
-
     bool refire = false;
 
-    for (; i != end; ++i)
+    for (OtauNode *node : m_model->nodes())
     {
-        DBG_Assert(*i != nullptr);
-        OtauNode *node = *i;
         if (!node)
             continue;
 
@@ -698,10 +687,6 @@ void StdOtauPlugin::imagePageTimerFired()
                 {
                     DBG_Printf(DBG_OTA, "OTAU: wait request timeout, send image notify (retry %d)\n", node->imgPageRequestRetry);
                     node->apsRequestId = INVALID_APS_REQ_ID; // don't wait for prior requests
-                    if (unicastImageNotify(node->address()))
-                    {
-                        node->lastActivity.restart();
-                    }
                 }
             }
         }
@@ -753,32 +738,51 @@ void StdOtauPlugin::cleanupTimerFired()
 
 void StdOtauPlugin::activityTimerFired()
 {
-    if (m_activityCounter > 0)
+    const auto now = deCONZ::steadyTimeRef();
+
+    auto i = std::find_if(m_otauTracker.begin(), m_otauTracker.end(), [&](const OtauTracker &t)
     {
-        m_activityCounter--;
+        return deCONZ::TimeSeconds{10} < (now - t.lastActivity);
+    });
+
+    if (i != m_otauTracker.end())
+    {
+        m_otauTracker.erase(i);
     }
 
-    if (m_activityCounter == 0)
+    if (m_otauTracker.empty())
     {
         m_activityTimer->stop();
-    }
-    else if (m_activityCounter < 0)
-    { // sanity
-        m_activityCounter = 0;
     }
 }
 
 void StdOtauPlugin::markOtauActivity(const deCONZ::Address &address)
 {
-    if (0 == m_activityCounter || !m_activityTimer->isActive() || address.ext() == m_activityAddress.ext())
+    if (!address.hasExt())
     {
-        m_activityCounter = MAX_ACTIVITY;
-        m_activityAddress = address;
+        return;
+    }
 
-        if (!m_activityTimer->isActive())
-        {
-            m_activityTimer->start(ACTIVITY_TIMER_DELAY);
-        }
+    auto i = std::find_if(m_otauTracker.begin(), m_otauTracker.end(), [&](const OtauTracker &t)
+    {
+        return t.extAddr == address.ext();
+    });
+
+    if (i != m_otauTracker.end())
+    {
+        i->lastActivity = deCONZ::steadyTimeRef();
+    }
+    else if (m_otauTracker.size() < OTAU_MAX_ACTIVE)
+    {
+        OtauTracker t;
+        t.extAddr = address.ext();
+        t.lastActivity = deCONZ::steadyTimeRef();
+        m_otauTracker.push_back(t);
+    }
+
+    if (!m_activityTimer->isActive())
+    {
+        m_activityTimer->start(ACTIVITY_TIMER_DELAY);
     }
 }
 
@@ -788,7 +792,7 @@ void StdOtauPlugin::checkFileLinks()
     paths.append(m_imgPath);
     //paths.append(deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau");
 
-    for (QString path : paths)
+    for (const QString &path : paths)
     {
         QDir dir(path);
         if (!dir.exists())
@@ -937,11 +941,20 @@ bool StdOtauPlugin::unicastImageNotify(const deCONZ::Address &addr)
             return false;
         }
 
+        notf.radius = 0;
+        notf.addr = addr;
+        notf.addrMode = deCONZ::ApsExtAddress;
+        notf.dstEndpoint = node->endpoint;
+
         // blacklist some faulty versions tue image notify bug in BitCloud 3.2, 3.3
         if (node->manufacturerId == VENDOR_DDEL)
         {
+            node->endpointNotify = 0x0A;
+            notf.dstEndpoint = node->endpointNotify;
+
             if (node->imageType() == IMG_TYPE_FLS_PP3_H3)
             {
+                notf.dstEndpoint = 0x0A;
                 if (node->softwareVersion() < 0x201000C4)
                 {
                     return false;
@@ -962,11 +975,6 @@ bool StdOtauPlugin::unicastImageNotify(const deCONZ::Address &addr)
                 }
             }
         }
-
-        notf.radius = 0;
-        notf.addr = addr;
-        notf.addrMode = deCONZ::ApsExtAddress;
-        notf.dstEndpoint = node->endpoint;
 
         return imageNotify(&notf);
     }
@@ -1171,7 +1179,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     if (deCONZ::ApsController::instance()->getParameter(deCONZ::ParamOtauActive) != 0)
     {
         // check for image
-        if (!node->hasData())
+        if (!node->hasData() && m_otauTracker.size() < OTAU_MAX_ACTIVE)
         {
             node->file.subElements.clear();
             node->setHasData(false);
@@ -1196,7 +1204,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
 
     if (queryNextImageResponse(node))
     {
-        node->setState(OtauNode::NodeBusy);
+        node->setState(OtauNode::NodeWaitConfirm);
     }
     else
     {
@@ -1250,12 +1258,7 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
             DBG_Printf(DBG_OTA, "OTAU: send query next image response: OTAU_NO_IMAGE_AVAILABLE (sensors busy)\n");
         }
-//        else if (!otauIsActive())
-//        {
-//            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-//            DBG_Printf(DBG_OTA, "OTAU: send query next image response: OTAU_NO_IMAGE_AVAILABLE\n");
-//        }
-        else if (otauIsActive() && (m_activityAddress.ext() != node->address().ext()))
+        else if (m_otauTracker.size() >= OTAU_MAX_ACTIVE)
         {
             DBG_Printf(DBG_OTA, "OTAU: busy, don't answer and let node run in timeout\n");
             return false;
@@ -1280,10 +1283,6 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << node->file.totalImageSize;
 
             markOtauActivity(node->address());
-            if (node->address().ext() == m_activityAddress.ext())
-            {
-                m_activityCounter = 5;
-            }
         }
         else
         {
@@ -1338,11 +1337,6 @@ void StdOtauPlugin::imageBlockRequest(const deCONZ::ApsDataIndication &ind, cons
 
     markOtauActivity(node->address());
 
-    if (otauIsActive() && node->address().ext() != m_activityAddress.ext())
-    {
-        return; // ignore
-    }
-
     node->refreshTimeout();
     invalidateUpdateEndRequest(node);
 
@@ -1386,7 +1380,7 @@ void StdOtauPlugin::imageBlockRequest(const deCONZ::ApsDataIndication &ind, cons
     node->apsRequestId = INVALID_APS_REQ_ID;
     if (imageBlockResponse(node))
     {
-        node->setState(OtauNode::NodeBusy);
+        node->setState(OtauNode::NodeWaitConfirm);
     }
     else
     {
@@ -1401,10 +1395,6 @@ void StdOtauPlugin::imageBlockRequest(const deCONZ::ApsDataIndication &ind, cons
  */
 bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
 {
-    uint8_t dataSize = 0;
-    deCONZ::ApsDataRequest req;
-    deCONZ::ZclFrame zclFrame;
-
     DBG_Assert(node->address().hasExt());
     if (!node->address().hasExt())
     {
@@ -1414,14 +1404,18 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
     if (node->apsRequestId != INVALID_APS_REQ_ID)
     {
         if (node->lastResponseTime.isValid() &&
-            node->lastResponseTime.elapsed() < (1000 * 30)) // prevent stallation
+            node->lastResponseTime.elapsed() < (1000 * 10)) // prevent stallation
         {
-            DBG_Printf(DBG_OTA, "OTAU: ...\n");
+            //DBG_Printf(DBG_OTA, "OTAU: ...\n");
             return false;
         }
 
         DBG_Printf(DBG_OTA, "OTAU: warn apsRequestId != 0\n");
     }
+
+    uint8_t dataSize = 0;
+    deCONZ::ApsDataRequest req;
+    deCONZ::ZclFrame zclFrame;
 
     req.setProfileId(node->profileId);
     req.setDstEndpoint(node->endpoint);
@@ -1479,6 +1473,12 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
                 dataSize = node->imgBlockReq.maxDataSize;
             }
 
+            // some older DDEL and BJ devices have an error in BitCloud stack to support larger payloads
+            if ((node->manufacturerId == VENDOR_DDEL || node->manufacturerId == VENDOR_BUSCH_JAEGER) && dataSize > 43)
+            {
+                dataSize = 43;
+            }
+
             uint32_t offset = node->imgBlockReq.offset;
 
             stream << (uint8_t)OTAU_SUCCESS;
@@ -1520,6 +1520,8 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
             {
                 stream << (uint8_t)node->rawFile[offset++];
             }
+
+            node->imgBlockReq.maxDataSize = dataSize; // remember
         }
         else
         {
@@ -1537,11 +1539,10 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
     if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == deCONZ::Success)
     {
         DBG_Printf(DBG_OTA, "OTAU: send img block rsp offset: 0x%08X dataSize %u 0x%016llX\n", node->imgBlockReq.offset, dataSize, node->address().ext());
-        node->imgBlockReq.pageBytesDone += dataSize;
-        node->imgBlockReq.offset += dataSize;
         node->apsRequestId = req.id();
         node->zclCommandId = zclFrame.commandId();
-        node->lastResponseTime.restart();
+        node->lastResponseTime.invalidate();
+        node->lastResponseTime.start();
         return true;
     }
 
@@ -1564,11 +1565,6 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
 
     markOtauActivity(node->address());
 
-    if (otauIsActive() && node->address().ext() != m_activityAddress.ext())
-    {
-        return; // ignore
-    }
-
     deCONZ::ApsController *apsCtrl = deCONZ::ApsController::instance();
     if (!apsCtrl)
     {
@@ -1587,19 +1583,6 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
     {
         defaultResponse(node, zclFrame.commandId(), OTAU_UNSUP_CLUSTER_COMMAND);
         return;
-    }
-
-    if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
-    {
-        m_w->setPacketSpacingMs(m_slowPageSpaceing); // slow down
-    }
-    else if (m_w->packetSpacingMs() == m_slowPageSpaceing)
-    {
-        m_w->setPacketSpacingMs(m_fastPageSpaceing); // speed up
-    }
-    else if (m_w->packetSpacingMs() < MIN_PAGE_SPACEING)
-    {
-        m_w->setPacketSpacingMs(MIN_PAGE_SPACEING);
     }
 
     node->refreshTimeout();
@@ -1661,7 +1644,9 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
 
     node->setState(OtauNode::NodeWaitPageSpacing);
     if (!m_imagePageTimer->isActive())
-        m_imagePageTimer->start(IMAGE_PAGE_TIMER_DELAY);
+    {
+        m_imagePageTimer->start(0);
+    }
 }
 
 /*! Sends a image block responses for a whole page.
@@ -1686,54 +1671,53 @@ bool StdOtauPlugin::imagePageResponse(OtauNode *node)
         return imageBlockResponse(node);
     }
 
+    if (node->apsRequestId != INVALID_APS_REQ_ID && node->zclCommandId == OTAU_IMAGE_BLOCK_RESPONSE_CMD_ID)
+    {
+        // wait confirm
+        return true;
+    }
+
     if (node->imgBlockReq.pageBytesDone >= node->imgBlockReq.pageSize)
     {
         node->setState(OtauNode::NodeWaitNextRequest);
 
         if (!m_imagePageTimer->isActive())
+        {
             m_imagePageTimer->start(IMAGE_PAGE_TIMER_DELAY);
+        }
         return true;
     }
 
     if (node->imgBlockReq.pageBytesDone > 0)
     {
-        quint16 spacing = node->imgBlockReq.responseSpacing;
+        int spacing = m_w->packetSpacingMs();
 
-        spacing = static_cast<quint16>(m_w->packetSpacingMs());
-
-        if (node->lastResponseTime.isValid() &&
-            !node->lastResponseTime.hasExpired(spacing))
+        if (node->lastResponseTime.isValid() && !node->lastResponseTime.hasExpired(spacing))
         {
             node->setState(OtauNode::NodeWaitPageSpacing);
 
             if (!m_imagePageTimer->isActive())
+            {
                 m_imagePageTimer->start(IMAGE_PAGE_TIMER_DELAY);
+            }
 
-            DBG_Printf(DBG_OTA, "OTAU: wait spacing 0x%016llX\n", node->address().ext());
             return true;
         }
     }
 
     int succ = 0;
-    for (int i = 0; i < 1; i++)
-    {
-        if (static_cast<int>(node->imgBlockReq.offset) >= node->rawFile.size())
-        {
-            node->setState(OtauNode::NodeWaitNextRequest);
-            return true;
-        }
 
-        if (imageBlockResponse(node))
-        {
-            node->imgBlockResponseRetry = 0;
-            succ++;
-        }
-        else
-        {
-            node->setState(OtauNode::NodeWaitPageSpacing);
-            node->imgBlockResponseRetry++;
-            break;
-        }
+    if (imageBlockResponse(node))
+    {
+        node->imgBlockResponseRetry = 0;
+        succ++;
+    }
+    else
+    {
+        node->setState(OtauNode::NodeWaitPageSpacing);
+        node->imgBlockResponseRetry++;
+        DBG_Printf(DBG_OTA, "OTAU: failed send img block rsp (retry %d)\n", node->imgBlockResponseRetry);
+
     }
 
     return succ > 0;
@@ -1776,11 +1760,6 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
     DBG_Printf(DBG_OTA, "OTAU: upgrade end req: status: 0x%02X, fwVersion:0x%08X, imgType: 0x%04X\n", node->upgradeEndReq.status, node->upgradeEndReq.fileVersion, node->upgradeEndReq.imageType);
 
     node->setState(OtauNode::NodeIdle);
-
-    if (m_activityAddress.ext() == node->address().ext())
-    {
-        m_activityCounter = 1;
-    }
 
     if (node->upgradeEndReq.status == OTAU_SUCCESS)
     {
@@ -2102,7 +2081,40 @@ void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoin
         return;
     }
 
-    const deCONZ::SimpleDescriptor *sd = getSimpleDescriptor(node, endpoint);
+    const deCONZ::SimpleDescriptor *sd = nullptr;
+
+    // on dresden elektronik FLS only first OTA endpoint should be used
+    if (node->nodeDescriptor().manufacturerCode() == VENDOR_DDEL &&  endpoint > 0x0A && endpoint < 0x20)
+    {
+        const auto i = std::find_if(node->simpleDescriptors().cbegin(), node->simpleDescriptors().cend(), [](const deCONZ::SimpleDescriptor &s)
+        {
+            if (s.endpoint() != 0x0A)
+            {
+                return false;
+            }
+
+            for (const deCONZ::ZclCluster &cl : s.outClusters())
+            {
+                if (cl.id() == OTAU_CLUSTER_ID)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if (i != node->simpleDescriptors().cend())
+        {
+            endpoint = i->endpoint();
+            sd = &*i;
+        }
+    }
+
+    if (!sd)
+    {
+        sd = getSimpleDescriptor(node, endpoint);
+    }
 
     if (!sd)
     {
@@ -2124,6 +2136,7 @@ void StdOtauPlugin::checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoin
                 if (otauNode)
                 {
                     otauNode->rxOnWhenIdle = node->nodeDescriptor().receiverOnWhenIdle();
+                    otauNode->endpointNotify = sd->endpoint();
                 }
 
                 if (otauNode && otauNode->profileId != sd->profileId())

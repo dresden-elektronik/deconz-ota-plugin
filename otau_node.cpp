@@ -26,6 +26,7 @@ OtauNode::OtauNode(const deCONZ::Address &addr)
     profileId = HA_PROFILE_ID;
     manufacturerId = 0;
     endpoint = 0xFF; // for unicast if endpoint not known
+    endpointNotify = 0;
     rxOnWhenIdle = true;
 }
 

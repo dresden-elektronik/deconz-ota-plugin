@@ -253,33 +253,30 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
  */
 OtauNode *OtauModel::getNode(const deCONZ::Address &addr, bool create)
 {
-    std::vector<OtauNode*>::iterator i = m_nodes.begin();
-    std::vector<OtauNode*>::iterator end = m_nodes.end();
-
     if (!addr.hasExt() && !addr.hasNwk())
     {
-        return 0;
+        return nullptr;
     }
 
-    for (; i != end; ++i)
+    for (OtauNode *i : m_nodes)
     {
-        if (addr.hasNwk() && (*i)->address().hasNwk())
+        if (addr.hasExt() && i->address().hasExt())
         {
-            if ((*i)->address().nwk() == addr.nwk())
+            if (i->address().ext() == addr.ext())
             {
-                return *i;
-            }
-        }
-
-        if (addr.hasExt() && (*i)->address().hasExt())
-        {
-            if ((*i)->address().ext() == addr.ext())
-            {
-                if ((*i)->address().nwk() != addr.nwk())
+                if (i->address().nwk() != addr.nwk())
                 {
                     // update nwk address
                 }
-                return *i;
+                return i;
+            }
+        }
+
+        if (addr.hasNwk() && i->address().hasNwk())
+        {
+            if (i->address().nwk() == addr.nwk())
+            {
+                return i;
             }
         }
     }
