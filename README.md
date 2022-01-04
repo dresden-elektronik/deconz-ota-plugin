@@ -65,7 +65,7 @@ Image | Device(s) | Firmware
 0111 | Hue Go (2nd Gen) | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0111/16782848/100B-0111-01001600-ConfLight-ModuLum-EFR32MG13.zigbee)
 0112 | Bluetooth E27 | [1.76.10](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16784128/100B-0112-01001B00-ConfLightBLE-Lamps-EFR32MG13.zigbee)
 0114 | Bluetooth GU10 | [1.76.11](https://firmware.meethue.com/storage/100b-114/16782344/94b9903a-8b42-4e40-905b-7863d9eca38e/100B-0114-01001408-ConfLightBLE-Lamps-EFR32MG21.zigbee)
-0115 | Hue smart plug | [1.76.10](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16780032/100B-0115-01000B00-SmartPlug-EFR32MG13.zigbee)
+0115 | Hue smart plug | [1.93.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16781056/100B-0115-01000F00-SmartPlug-EFR32MG13.zigbee)
 0116 | Hue smart button | [2.30.0_r30777](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33562112/100B-0116-02001E00-Switch-EFR32MG13.zigbee)<br>2.47.8_h2f96862
 0117 | Hue Lightstrip Plus v4 | [1.76.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0117/16780288/100B-0117-01000C00-ConfLightBLE-ModuLum-EFR32MG21.zigbee)
 0119 | Hue dimmer switch (2021) | 2.42.0_h1F5E860<br>2.45.2_hF4400CA
