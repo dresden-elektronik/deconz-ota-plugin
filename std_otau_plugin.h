@@ -110,6 +110,7 @@ private:
     StdOtauWidget *m_w;
     quint8 m_zclSeq;
     quint8 m_maxAsduDataSize;
+    quint8 m_nNoAckErrors;
     QTimer *m_imagePageTimer;
     QTimer *m_cleanupTimer;
     QTimer *m_activityTimer;

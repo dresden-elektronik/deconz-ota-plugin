@@ -111,7 +111,7 @@ QByteArray OtauFile::toArray()
         }
     }
 
-    DBG_Printf(DBG_OTA, "OTAU:   packed %d bytes\n", qPrintable(path), arr.length());
+    DBG_Printf(DBG_OTA, "OTAU:   packed %d bytes\n", arr.length());
 
     return arr;
 }
