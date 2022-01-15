@@ -415,15 +415,27 @@ void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
                 DBG_Printf(DBG_OTA, "OTAU: aps conf failed status 0x%02X\n", conf.status());
                 // FIXME hack to detect source routing
                 // note that no ack doesn't always refer to source routing but this provides a safe fallback
-                if (conf.status() == deCONZ::ApsNoAckStatus)
+                if (conf.status() == deCONZ::ApsNoAckStatus  || conf.status() == 0xE5 /* ??? */)
                 {
                     if (++m_nNoAckErrors > NO_ACK_THRESHOLD ||
                         (node->zclCommandId == OTAU_IMAGE_BLOCK_RESPONSE_CMD_ID &&
                          node->imgBlockReq.offset == 0)
                        )
                     {
-                        m_maxAsduDataSize = MAX_SAFE_ASDU_SIZE;
-                        DBG_Printf(DBG_OTA, "OTAU: reducing max data size to %d\n", MAX_DATA_SIZE);
+                        if (m_maxAsduDataSize > MAX_SAFE_ASDU_SIZE)
+                        {
+                            m_maxAsduDataSize = MAX_SAFE_ASDU_SIZE;
+                            DBG_Printf(DBG_OTA, "OTAU: reducing max data size to %d\n", MAX_DATA_SIZE);
+                        }
+                    }
+
+                    if (node->zclCommandId == OTAU_IMAGE_BLOCK_RESPONSE_CMD_ID && node->imgBlockReq.offset > 0)
+                    {
+                        if (node->imgBlockResponseRetry < MAX_IMG_BLOCK_RSP_RETRY)
+                        {
+                            node->imgBlockResponseRetry++;
+                            imageBlockResponse(node);
+                        }
                     }
                 }
                 else
@@ -861,6 +873,7 @@ bool StdOtauPlugin::imageNotify(ImageNotifyReq *notf)
         req.dstAddress() = notf->addr;
         req.setDstEndpoint(notf->dstEndpoint);
         req.setSrcEndpoint(m_srcEndpoint);
+        req.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
         if (node)
         {
             req.setProfileId(node->profileId);
@@ -955,21 +968,17 @@ bool StdOtauPlugin::unicastImageNotify(const deCONZ::Address &addr)
             if (node->imageType() == IMG_TYPE_FLS_PP3_H3)
             {
                 notf.dstEndpoint = 0x0A;
-                if (node->softwareVersion() < 0x201000C4)
-                {
-                    return false;
-                }
             }
             else if (node->imageType() == IMG_TYPE_FLS_A2)
             {
-                if (node->softwareVersion() < 0x201000C4)
+                if (node->softwareVersion() > 0 && node->softwareVersion() < 0x201000C4)
                 {
                     return false;
                 }
             }
             else if (node->imageType() == IMG_TYPE_FLS_NB)
             {
-                if (node->softwareVersion() < 0x200000C8)
+                if (node->softwareVersion() > 0 && node->softwareVersion() < 0x200000C8)
                 {
                     return false;
                 }
@@ -1474,9 +1483,9 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
             }
 
             // some older DDEL and BJ devices have an error in BitCloud stack to support larger payloads
-            if ((node->manufacturerId == VENDOR_DDEL || node->manufacturerId == VENDOR_BUSCH_JAEGER) && dataSize > 43)
+            if ((node->manufacturerId == VENDOR_DDEL || node->manufacturerId == VENDOR_BUSCH_JAEGER) && dataSize > 40)
             {
-                dataSize = 43;
+                dataSize = 40;
             }
 
             uint32_t offset = node->imgBlockReq.offset;
@@ -1571,6 +1580,11 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
         return;
     }
 
+    if (!m_w->pageRequestEnabled())
+    {
+        return;
+    }
+
     node->reqSequenceNumber = zclFrame.sequenceNumber();
 
     if (node->state() == OtauNode::NodeAbort)
@@ -1643,10 +1657,9 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
     node->imgBlockResponseRetry = 0;
 
     node->setState(OtauNode::NodeWaitPageSpacing);
-    if (!m_imagePageTimer->isActive())
-    {
-        m_imagePageTimer->start(0);
-    }
+    node->lastResponseTime.start();
+    m_imagePageTimer->stop();
+    m_imagePageTimer->start(IMAGE_PAGE_TIMER_DELAY);
 }
 
 /*! Sends a image block responses for a whole page.
@@ -1688,7 +1701,7 @@ bool StdOtauPlugin::imagePageResponse(OtauNode *node)
         return true;
     }
 
-    if (node->imgBlockReq.pageBytesDone > 0)
+    //if (node->imgBlockReq.pageBytesDone > 0)
     {
         int spacing = m_w->packetSpacingMs();
 
