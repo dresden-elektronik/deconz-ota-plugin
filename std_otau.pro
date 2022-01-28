@@ -15,7 +15,7 @@ win32:CONFIG += dll
 TEMPLATE        = lib
 CONFIG         += plugin \
                += debug_and_release \
-               += c++11
+               += c++14
 
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += core gui widgets

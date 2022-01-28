@@ -99,6 +99,8 @@ void StdOtauWidget::queryClicked()
 {
     if (m_ouNode)
     {
+        deCONZ::ApsController::instance()->setParameter(deCONZ::ParamOtauActive, 1);
+
         emit unicastImageNotify(m_ouNode->address());
     }
 }
