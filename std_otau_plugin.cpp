@@ -331,7 +331,7 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
             case OTAU_IMAGE_PAGE_REQUEST_CMD_ID:
             case OTAU_UPGRADE_END_REQUEST_CMD_ID:
             case OTAU_UPGRADE_END_RESPONSE_CMD_ID:
-                DBG_Printf(DBG_OTA, "OTAU: default rsp cmd: 0x%02X, status 0x%02X\n", zclFrame.defaultResponseCommandId(), (uint8_t)zclFrame.defaultResponseStatus());
+                DBG_Printf(DBG_OTA, "OTAU: 0x%016llX default rsp cmd: 0x%02X, status 0x%02X, seq: %u\n", ind.srcAddress().ext(), zclFrame.defaultResponseCommandId(), (uint8_t)zclFrame.defaultResponseStatus(), zclFrame.sequenceNumber());
                 break;
 
             default:
@@ -426,15 +426,6 @@ void StdOtauPlugin::apsdeDataConfirm(const deCONZ::ApsDataConfirm &conf)
                         {
                             m_maxAsduDataSize = MAX_SAFE_ASDU_SIZE;
                             DBG_Printf(DBG_OTA, "OTAU: reducing max data size to %d\n", MAX_DATA_SIZE);
-                        }
-                    }
-
-                    if (node->zclCommandId == OTAU_IMAGE_BLOCK_RESPONSE_CMD_ID && node->imgBlockReq.offset > 0)
-                    {
-                        if (node->imgBlockResponseRetry < MAX_IMG_BLOCK_RSP_RETRY)
-                        {
-                            node->imgBlockResponseRetry++;
-                            imageBlockResponse(node);
                         }
                     }
                 }
@@ -697,8 +688,13 @@ void StdOtauPlugin::imagePageTimerFired()
                 }
                 else
                 {
-                    DBG_Printf(DBG_OTA, "OTAU: wait request timeout, send image notify (retry %d)\n", node->imgPageRequestRetry);
+                    DBG_Printf(DBG_OTA, "OTAU: wait request timeout (retry %d)\n", node->imgPageRequestRetry);
                     node->apsRequestId = INVALID_APS_REQ_ID; // don't wait for prior requests
+
+                    if (node->imgPageRequestRetry < 3)
+                    {
+                        unicastImageNotify(node->address());
+                    }
                 }
             }
         }
@@ -1547,7 +1543,11 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
 
     if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == deCONZ::Success)
     {
-        DBG_Printf(DBG_OTA, "OTAU: send img block rsp offset: 0x%08X dataSize %u 0x%016llX\n", node->imgBlockReq.offset, dataSize, node->address().ext());
+        if (zclFrame.payload().size() > 1)
+        {
+            DBG_Printf(DBG_OTA, "OTAU: send img block rsp seq: %u offset: 0x%08X dataSize %u status: 0x%02X 0x%016llX\n", zclFrame.sequenceNumber(), node->imgBlockReq.offset, dataSize, quint8(zclFrame.payload().at(0)), node->address().ext());
+        }
+
         node->apsRequestId = req.id();
         node->zclCommandId = zclFrame.commandId();
         node->lastResponseTime.invalidate();
@@ -1658,8 +1658,10 @@ void StdOtauPlugin::imagePageRequest(const deCONZ::ApsDataIndication &ind, const
 
     node->setState(OtauNode::NodeWaitPageSpacing);
     node->lastResponseTime.start();
-    m_imagePageTimer->stop();
-    m_imagePageTimer->start(IMAGE_PAGE_TIMER_DELAY);
+    if (!m_imagePageTimer->isActive())
+    {
+        m_imagePageTimer->start(IMAGE_PAGE_TIMER_DELAY);
+    }
 }
 
 /*! Sends a image block responses for a whole page.
@@ -1794,7 +1796,7 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
     else
     { // TODO show detailed status
         node->setStatus(OtauNode::StatusUnknownError);
-        // TODO according spec. send default response with status SUCCESS
+        defaultResponse(node, zclFrame.commandId(), deCONZ::ZclSuccessStatus);
     }
 }
 
