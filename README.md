@@ -78,6 +78,7 @@ Image | Device(s) | Firmware | AR | DS
 0118 | Hue Gradient Lightstrip | [1.94.2](http://fds.dc1.philips.com/firmware/ZGB_100B_0118/16781312/100B-0118-01001000-PixelLum-EFR32MG21.zigbee)
 0119 | Hue dimmer switch (2021) | 2.42.0_h1F5E860<br>2.45.2_hF4400CA
 011c | Hue wall switch module | 1.0.3
+011f | Hue gradient lightstrip | 1.93.11 | Y | Y
 0000 | Lutron Aurora<br>_Manufacturer Code_: 1144 | [3.4](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3040/Superman_v3_04_Release_3040.ota)<br>[3.8](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3080/Superman_v3_08_ProdKey_3080.ota)*
 
 \* Note that the Lutron Aurora firmware v3.8 doesn't work with deCONZ.
