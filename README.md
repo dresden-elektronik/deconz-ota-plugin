@@ -50,36 +50,42 @@ Alternatively, you might use the Hue Bluetooth app to update the firmware of Blu
 
 Newer Hue light firmware versions, using the ZHA profile (for Zigbee 3.0) instead of ZHA, support attribute reporting.
 This is indicated in the **AR** column below.
-The latest firmwares versions of newer Hue lights support dynamic scenes.
+The latest firmwares versions of newer Hue white and color ambiance lights support dynamic scenes.
 This is indicated in the **DS** column below.
 
-Below is an overview of the images found so far:
+Below is an overview of known fimrware files:
 
 Image | Device(s) | Firmware | AR | DS
 -- | -- | -- | -- | --
-0100 | _unknown_ | [5.127.1.26581](http://fds.dc1.philips.com/firmware/ZGB_100B_0100/1107322837/TI_0100_5.127.1.26581_0012.sbl-ota)
-0103 | Gamut-A _Color light_ | [5.127.1.26581](http://fds.dc1.philips.com/firmware/ZGB_100B_0103/1107322837/LivCol_0103_5.127.1.26581_0012.sbl-ota)
-0104 | Gamut-B _Extended color light_ | [67.88.1](http://fds.dc1.philips.com:80/firmware/ZGB_100B_0104/1124096001/Atmel_0104_ConnectedLamp-Target_0012_88.1.sbl-ota)
-0105 | _Dimmable light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0105/1107326256/WhiteLamp-Atmel-Target_0105_5.130.1.30000_0012.sbl-ota)
-0108 | _unknown_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0108/1107326256/LivingColors-Target_0108_5.130.1.30000_0012.sbl-ota)
-0109 | Hue dimmer switch | [6.1.1.28573](http://fds.dc1.philips.com/firmware/ZGB_100B_0109/1107324829/Switch-ATmega_6.1.1.28573_0012.sbl-ota)
-010B | _unknown_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16783874/100B-010C-01001A02-ConfLight-Lamps_0012.zigbee)
-010C | Gamut-C _Extended color light_<br>_Color temperature light_ | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16783874/100B-010C-01001A02-ConfLight-Lamps_0012.zigbee)
-010D | Hue motion sensor | [6.1.1.27575](http://fds.dc1.philips.com/firmware/ZGB_100B_010D/1107323831/Sensor-ATmega_6.1.1.27575_0012.sbl-ota)
-010E | Aurelle Panels, Signes, Playbar, Being White Ambiance | [1.50.2_r30933](http://fds.dc1.philips.com/firmware/ZGB_100B_010E/16783620/100B-010E-01001904-ConfLight-ModuLum_0012.zigbee)
-010F | Outdoor led strip (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_010F/16779778/100B-010F-01000A02-ConfLight-LedStrips_0012.zigbee)
-0110 | Bluetooth light (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0110/16782848/100B-0110-01001600-ConfLight-Lamps-EFR32MG13.zigbee)
-0111 | Hue Go (2nd Gen) | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0111/16782848/100B-0111-01001600-ConfLight-ModuLum-EFR32MG13.zigbee)
-0112 | Bluetooth E27 | [1.76.10](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16784128/100B-0112-01001B00-ConfLightBLE-Lamps-EFR32MG13.zigbee)
+0100 | _unknown_ | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0100/1124097291/ConnectedLamp-TI-Target_0012.sbl-ota)
+0103 | Gamut-A _Color light_ | [67.93.11](http://fds.dc1.philips.com/firmware/ZGB_100B_0103/1124097291/LivingColors-Hue-Target_0012.sbl-ota) | n | n
+0104 | Gamut-B _Extended color light_ | [67.88.1](http://fds.dc1.philips.com:80/firmware/ZGB_100B_0104/1124096001/Atmel_0104_ConnectedLamp-Target_0012_88.1.sbl-ota) | n | n
+0105 | _Dimmable light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0105/1107326256/WhiteLamp-Atmel-Target_0105_5.130.1.30000_0012.sbl-ota) | n | n
+0108 | _unknown_ | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0108/1124097287/100B_0108_LivingColors-Target_0012_93.7.sbl-ota)
+0109 | Hue dimmer switch | [6.1.1.28573](http://fds.dc1.philips.com/firmware/ZGB_100B_0109/1107324829/Switch-ATmega_6.1.1.28573_0012.sbl-ota) | - | -
+010B | _unknown_ | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_010B/1124096001/LSP_010B_ModuLum-ATmega_0012_88.1.sbl-ota)
+010C | Gamut-C _Extended color light_<br>_Color temperature light_ | [1.88.1](http://fds.dc1.philips.com/firmware/ZGB_100B_010C/16785664/100B-010C-01002100-ConfLight-Lamps_0012.zigbee) | n | n
+010D | Hue motion sensor | [6.1.1.27575](http://fds.dc1.philips.com/firmware/ZGB_100B_010D/1107323831/Sensor-ATmega_6.1.1.27575_0012.sbl-ota) | - | -
+010E | Aurelle Panels, Signes, Playbar, Being White Ambiance | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_010E/16785152/100B-010E-01001F00-ConfLight-ModuLum_0012.zigbee)
+010F | Outdoor led strip (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_010F/16781312/100B-010F-01001000-ConfLight-LedStrips_0012.zigbee)
+0110 | Bluetooth light (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0110/16785410/100B-0110-01002002-ConfLight-Lamps-EFR32MG13.zigbee)
+0111 | Hue Go (2nd Gen) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0111/16784640/100B-0111-01001D00-ConfLight-ModuLum-EFR32MG13.zigbee) 
+0112 | Bluetooth E27 | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16786178/100B-0112-01002302-ConfLightBLE-Lamps-EFR32MG13.zigbee)
 0114 | Hue white and color ambiance bluetooth | [1.93.11](http://fds.dc1.philips.com:80/firmware/ZGB_100B_0114/16784402/100B-0114-01001C12-ConfLightBLE-Lamps-EFR32MG21.zigbee)| Y | Y
-0115 | Hue smart plug | [1.93.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16781056/100B-0115-01000F00-SmartPlug-EFR32MG13.zigbee)
-0116 | Hue smart button | [2.30.0_r30777](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33562112/100B-0116-02001E00-Switch-EFR32MG13.zigbee)<br>2.47.8_h2f96862
-0117 | Hue Lightstrip Plus v4 | [1.76.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0117/16780288/100B-0117-01000C00-ConfLightBLE-ModuLum-EFR32MG21.zigbee)
-0118 | Hue Gradient Lightstrip | [1.94.2](http://fds.dc1.philips.com/firmware/ZGB_100B_0118/16781312/100B-0118-01001000-PixelLum-EFR32MG21.zigbee)
-0119 | Hue dimmer switch (2021) | 2.42.0_h1F5E860<br>2.45.2_hF4400CA
-011c | Hue wall switch module | 1.0.3
-011f | Hue Ensis | [1.93.11](http://fds.dc1.philips.com/firmware/ZGB_100B_011F/16784902/100B-011F-01001E06-ConfLightBLE-ModuLumV3-EFR32MG21.zigbee) | Y | Y
-0000 | Lutron Aurora<br>_Manufacturer Code_: 1144 | [3.4](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3040/Superman_v3_04_Release_3040.ota)<br>[3.8](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3080/Superman_v3_08_ProdKey_3080.ota)*
+0115 | Hue smart plug | [1.93.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16781056/100B-0115-01000F00-SmartPlug-EFR32MG13.zigbee) | | -
+0116 | Hue smart button | [2.30.0_r30777](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33566472/100B-0116-02002F08-Switch-EFR32MG13.zigbee) | - | -
+0117 | Hue Lightstrip Plus v4 | [1.93.7](http://fds.dc1.philips.com/firmware/ZGB_100B_0117/16784640/100B-0117-01001D00-ConfLightBLE-ModuLum-EFR32MG21.zigbee) | Y | n
+0118 | Hue gradient lightstrip | [1.97.3](http://fds.dc1.philips.com/firmware/ZGB_100B_0118/16781828/100B-0118-01001204-PixelLum-EFR32MG21.zigbee) | Y | Y
+0119 | Hue dimmer switch (2021) | [2.45.2_hF4400CA](http://fds.dc1.philips.com/firmware/ZGB_100B_0119/33565954/100B-0119-02002D02-Switch-EFR32MG22.zigbee) | - | -
+011A | Hue smart plug | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_011A/16779776/100B-011A-01000A00-SmartPlug-EFR32MG21.zigbee) | | -
+011B | Hue motion sensor (2022) | 2.53.6 | - | -
+011C | Hue wall switch module | 1.0.3 | - | -
+011D | _unknown_ | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_011D/16785154/100B-011D-01001F02-ConfLight-ModuLumV2-EFR32MG13.zigbee)
+011E | Hue Go v2 (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_011E/16785152/100B-011E-01001F00-ConfLight-PortableV2-EFR32MG13.zigbee)
+011F | Hue Ensis | [1.93.11](http://fds.dc1.philips.com/firmware/ZGB_100B_011F/16784902/100B-011F-01001E06-ConfLightBLE-ModuLumV3-EFR32MG21.zigbee) | Y | Y
+0120 | Hue Go v3 (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0120/16784896/100B-0120-01001E00-ConfLightBLE-PortableV3-EFR32MG21.zigbee)
+0121 | Hue tap dial switch | 2.59.19 | - | -
+0000 | Lutron Aurora<br>_Manufacturer Code_: 1144 | [3.4](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3040/Superman_v3_04_Release_3040.ota)<br>[3.8](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3080/Superman_v3_08_ProdKey_3080.ota)* | - | -
 
 \* Note that the Lutron Aurora firmware v3.8 doesn't work with deCONZ.
 
