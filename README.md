@@ -46,13 +46,20 @@ To find the firmware files, you need to sniff the traffic from the Hue bridge to
 Unfortunately, the bridge will only download firmware files for connected devices with outdated firmware.
 For details, see [issue #10](https://github.com/dresden-elektronik/deconz-ota-plugin/issues/10).
 
+Alternatively, you might use the Hue Bluetooth app to update the firmware of Bluetooth enabled devices.
+
+Newer Hue light firmware versions, using the ZHA profile (for Zigbee 3.0) instead of ZHA, support attribute reporting.
+This is indicated in the **AR** column below.
+The latest firmwares versions of newer Hue lights support dynamic scenes.
+This is indicated in the **DS** column below.
+
 Below is an overview of the images found so far:
 
-Image | Device(s) | Firmware
--- | -- | --
+Image | Device(s) | Firmware | AR | DS
+-- | -- | -- | -- | --
 0100 | _unknown_ | [5.127.1.26581](http://fds.dc1.philips.com/firmware/ZGB_100B_0100/1107322837/TI_0100_5.127.1.26581_0012.sbl-ota)
 0103 | Gamut-A _Color light_ | [5.127.1.26581](http://fds.dc1.philips.com/firmware/ZGB_100B_0103/1107322837/LivCol_0103_5.127.1.26581_0012.sbl-ota)
-0104 | Gamut-B _Extended color light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0104/1107326256/ConnectedLamp-Atmel_0104_5.130.1.30000_0012.sbl-ota)
+0104 | Gamut-B _Extended color light_ | [67.88.1](http://fds.dc1.philips.com:80/firmware/ZGB_100B_0104/1124096001/Atmel_0104_ConnectedLamp-Target_0012_88.1.sbl-ota)
 0105 | _Dimmable light_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0105/1107326256/WhiteLamp-Atmel-Target_0105_5.130.1.30000_0012.sbl-ota)
 0108 | _unknown_ | [5.130.1.30000](http://fds.dc1.philips.com/firmware/ZGB_100B_0108/1107326256/LivingColors-Target_0108_5.130.1.30000_0012.sbl-ota)
 0109 | Hue dimmer switch | [6.1.1.28573](http://fds.dc1.philips.com/firmware/ZGB_100B_0109/1107324829/Switch-ATmega_6.1.1.28573_0012.sbl-ota)
@@ -64,7 +71,7 @@ Image | Device(s) | Firmware
 0110 | Bluetooth light (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0110/16782848/100B-0110-01001600-ConfLight-Lamps-EFR32MG13.zigbee)
 0111 | Hue Go (2nd Gen) | [1.65.9_hB3217DF4](http://fds.dc1.philips.com/firmware/ZGB_100B_0111/16782848/100B-0111-01001600-ConfLight-ModuLum-EFR32MG13.zigbee)
 0112 | Bluetooth E27 | [1.76.10](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16784128/100B-0112-01001B00-ConfLightBLE-Lamps-EFR32MG13.zigbee)
-0114 | Bluetooth GU10 | [1.93.11](http://fds.dc1.philips.com:80/firmware/ZGB_100B_0114/16784402/100B-0114-01001C12-ConfLightBLE-Lamps-EFR32MG21.zigbee)
+0114 | Hue white and ambiance bluetooth | [1.93.11](http://fds.dc1.philips.com:80/firmware/ZGB_100B_0114/16784402/100B-0114-01001C12-ConfLightBLE-Lamps-EFR32MG21.zigbee)| Y | Y
 0115 | Hue smart plug | [1.93.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16781056/100B-0115-01000F00-SmartPlug-EFR32MG13.zigbee)
 0116 | Hue smart button | [2.30.0_r30777](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33562112/100B-0116-02001E00-Switch-EFR32MG13.zigbee)<br>2.47.8_h2f96862
 0117 | Hue Lightstrip Plus v4 | [1.76.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0117/16780288/100B-0117-01000C00-ConfLightBLE-ModuLum-EFR32MG21.zigbee)
