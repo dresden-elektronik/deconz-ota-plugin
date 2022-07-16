@@ -73,7 +73,7 @@ Image | Device(s) | Firmware | AR | DS
 0112 | Bluetooth E27 | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0112/16786178/100B-0112-01002302-ConfLightBLE-Lamps-EFR32MG13.zigbee)
 0114 | Hue white and color ambiance bluetooth | [1.93.11](http://fds.dc1.philips.com:80/firmware/ZGB_100B_0114/16784402/100B-0114-01001C12-ConfLightBLE-Lamps-EFR32MG21.zigbee)| Y | Y
 0115 | Hue smart plug | [1.93.6](http://fds.dc1.philips.com/firmware/ZGB_100B_0115/16781056/100B-0115-01000F00-SmartPlug-EFR32MG13.zigbee) | | -
-0116 | Hue smart button | [2.30.0_r30777](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33566472/100B-0116-02002F08-Switch-EFR32MG13.zigbee) | - | -
+0116 | Hue smart button | [2.47.8_h2F968624](http://fds.dc1.philips.com/firmware/ZGB_100B_0116/33566472/100B-0116-02002F08-Switch-EFR32MG13.zigbee) | - | -
 0117 | Hue Lightstrip Plus v4 | [1.93.7](http://fds.dc1.philips.com/firmware/ZGB_100B_0117/16784640/100B-0117-01001D00-ConfLightBLE-ModuLum-EFR32MG21.zigbee) | Y | n
 0118 | Hue gradient lightstrip | [1.97.3](http://fds.dc1.philips.com/firmware/ZGB_100B_0118/16781828/100B-0118-01001204-PixelLum-EFR32MG21.zigbee) | Y | Y
 0119 | Hue dimmer switch (2021) | [2.45.2_hF4400CA](http://fds.dc1.philips.com/firmware/ZGB_100B_0119/33565954/100B-0119-02002D02-Switch-EFR32MG22.zigbee) | - | -
