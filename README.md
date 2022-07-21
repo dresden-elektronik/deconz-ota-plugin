@@ -77,7 +77,7 @@ Image | Device(s) | Firmware | AR | DS
 0117 | Hue Lightstrip Plus v4 | [1.93.7](http://fds.dc1.philips.com/firmware/ZGB_100B_0117/16784640/100B-0117-01001D00-ConfLightBLE-ModuLum-EFR32MG21.zigbee) | Y | n
 0118 | Hue gradient lightstrip | [1.97.3](http://fds.dc1.philips.com/firmware/ZGB_100B_0118/16781828/100B-0118-01001204-PixelLum-EFR32MG21.zigbee) | Y | Y
 0119 | Hue dimmer switch (2021) | [2.45.2_hF4400CA](http://fds.dc1.philips.com/firmware/ZGB_100B_0119/33565954/100B-0119-02002D02-Switch-EFR32MG22.zigbee) | - | -
-011A | Hue smart plug | [1.93.6](http://fds.dc1.philips.com/firmware/ZGB_100B_011A/16779776/100B-011A-01000A00-SmartPlug-EFR32MG21.zigbee) | | -
+011A | Hue smart plug | [1.93.6](http://fds.dc1.philips.com/firmware/ZGB_100B_011A/16779776/100B-011A-01000A00-SmartPlug-EFR32MG21.zigbee) | Y | -
 011B | Hue motion sensor (2022) | 2.53.6 | - | -
 011C | Hue wall switch module | 1.0.3 | - | -
 011D | _unknown_ | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_011D/16785154/100B-011D-01001F02-ConfLight-ModuLumV2-EFR32MG13.zigbee)
