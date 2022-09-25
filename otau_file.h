@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <QtGlobal>
 #include <QByteArray>
-#include <list>
+#include <vector>
 
 //!< Header field control bits
 #define OF_FC_SECURITY_CREDENTIAL_VERSION 0x0001
@@ -84,7 +84,7 @@ struct OtauFile
     uint16_t minHardwareVersion;
     uint16_t maxHardwareVersion;
 
-    std::list<SubElement> subElements;
+    std::vector<SubElement> subElements;
     QByteArray raw;
 };
 

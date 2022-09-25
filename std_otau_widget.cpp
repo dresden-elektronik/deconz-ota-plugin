@@ -306,8 +306,8 @@ void StdOtauWidget::saveClicked()
     //  preserve sub element "upgrade image"
     OtauFile::SubElement subImage;
     {
-        std::list<OtauFile::SubElement>::iterator it = m_editOf.subElements.begin();
-        std::list<OtauFile::SubElement>::iterator end = m_editOf.subElements.end();
+        auto it = m_editOf.subElements.begin();
+        auto end = m_editOf.subElements.end();
 
         for (;it != end; ++it)
         {
@@ -446,21 +446,6 @@ void StdOtauWidget::updateEditor()
     str = "0x" + QString("%1").arg(m_editOf.maxHardwareVersion, 4, 16, QLatin1Char('0')).toUpper();
     ui->of_maxHwVersionEdit->setText(str);
 
-    // standard 0
-    str = "0x" + QString("%1").arg(0, 8, 16, QLatin1Char('0')).toUpper();
+    str = QString::number(m_editOf.totalImageSize);
     ui->of_firmwareSizeEdit->setText(str);
-
-    {
-        std::list<OtauFile::SubElement>::iterator it = m_editOf.subElements.begin();
-        std::list<OtauFile::SubElement>::iterator end = m_editOf.subElements.end();
-
-        for (;it != end; ++it)
-        {
-            if (it->tag == TAG_UPGRADE_IMAGE)
-            {
-                str = "0x" + QString("%1 (%2 kB)").arg(it->length, 8, 16, QLatin1Char('0')).arg(it->length / 1024).toUpper();
-                ui->of_firmwareSizeEdit->setText(str);
-            }
-        }
-    }
 }

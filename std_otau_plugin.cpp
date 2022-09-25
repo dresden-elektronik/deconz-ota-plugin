@@ -32,9 +32,12 @@
   Ideally, the core would report whether source routing is enabled, and the value of max hops.
   For now, we count the number of consecutive NO_ACK errors to try and detect source routing.
 */
-#define SOURCE_ROUTING_MAX_HOPS 7
-#define SOURCE_ROUTING_SIZE     (1 + 1 + (2 * SOURCE_ROUTING_MAX_HOPS))
-#define MAX_SAFE_ASDU_SIZE      (MAX_ASDU_SIZE - SOURCE_ROUTING_SIZE)
+//#define SOURCE_ROUTING_MAX_HOPS 7
+//#define SOURCE_ROUTING_SIZE     (1 + 1 + (2 * SOURCE_ROUTING_MAX_HOPS))
+
+// some older devices support max. 40 bytes data size
+// use this also als fallback due source routing overhead
+#define MAX_SAFE_ASDU_SIZE      (40 + ZCL_HEADER_SIZE + IMAGE_BLOCK_RSP_HEADER_SIZE)
 #define NO_ACK_THRESHOLD        3
 
 // #define MAX_ASDU_SIZE1 45
@@ -50,7 +53,8 @@
 */
 #define IMAGE_BLOCK_RSP_HEADER_SIZE (1 + 2 + 2 + 4 + 4 + 1) // 14
 #define ZCL_HEADER_SIZE (1 + 1 + 1) // frame control + seq + commandId
-#define MAX_DATA_SIZE       (m_maxAsduDataSize - (ZCL_HEADER_SIZE + IMAGE_BLOCK_RSP_HEADER_SIZE))
+// for widest device support use 50 bytes max
+#define MAX_DATA_SIZE       qMin(50, (m_maxAsduDataSize - (ZCL_HEADER_SIZE + IMAGE_BLOCK_RSP_HEADER_SIZE)))
 #define MIN_RESPONSE_SPACING 20
 #define MAX_RESPONSE_SPACING 500
 #define DEFAULT_UPGRADE_TIME 5
@@ -113,7 +117,6 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     m_imagePageTimer = new QTimer(this);
     m_maxAsduDataSize = MAX_ASDU_SIZE;
     m_nNoAckErrors = 0;
-    // m_maxAsduDataSize = MAX_ASDU_SIZE1;
 
     m_hasflsNb = false;
     m_sensorActivity.invalidate();
@@ -808,13 +811,10 @@ void StdOtauPlugin::checkFileLinks()
             continue;
         }
 
-        QStringList ls = dir.entryList();
+        const QStringList ls = dir.entryList();
 
         for (const QString &n : ls)
         {
-            if (!n.endsWith(".zigbee") && !n.endsWith(".ota.signed") && !n.endsWith(".ota") && !n.endsWith(".sbl-ota"))
-                continue;
-
             QFile file(path + "/" + n);
             if (!file.open(QFile::ReadOnly))
                 continue;
@@ -1123,26 +1123,6 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     }
 
     invalidateUpdateEndRequest(node);
-    // // adjust max data size based on firmware version
-    // quint32 fwVersion = deCONZ::ApsController::instance()->getParameter(deCONZ::ParamFirmwareVersion);
-    // if (fwVersion < 0x261a0500) // first version to support large data sized
-    // {
-    //     m_maxAsduDataSize = MAX_ASDU_SIZE1;
-    // }
-    // else if ((node->address().ext() & macPrefixMask) == bjeMacPrefix)
-    // {
-    //     m_maxAsduDataSize = MAX_ASDU_SIZE1;
-    // }
-    // else if ((node->address().ext() & macPrefixMask) == ubisysMacPrefix ||
-    //          (node->address().ext() & macPrefixMask) == philipsMacPrefix ||
-    //          (node->address().ext() & macPrefixMask) == develcoMacPrefix)
-    // {
-    //     m_maxAsduDataSize = MAX_ASDU_SIZE3;
-    // }
-    // else
-    // {
-    //     m_maxAsduDataSize = MAX_ASDU_SIZE2;
-    // }
 
     node->reqSequenceNumber = zclFrame.sequenceNumber();
     node->endpoint = ind.srcEndpoint();
@@ -1278,9 +1258,9 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
             DBG_Printf(DBG_OTA, "OTAU: send query next image response: OTAU_NO_IMAGE_AVAILABLE to FLS-H lp\n");
         }
-        else if (node->permitUpdate() && node->hasData())
+        else if (node->permitUpdate() && node->hasData() && node->file.raw.size() != 0)
         {
-            node->rawFile = node->file.toArray();
+            node->rawFile = node->file.raw;
             stream << (uint8_t)OTAU_SUCCESS;
             stream << node->file.manufacturerCode;
             stream << node->file.imageType;
