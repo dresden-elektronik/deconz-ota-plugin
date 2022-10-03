@@ -1,5 +1,4 @@
 #include <QDataStream>
-#include <QDebug>
 #include <deconz.h>
 #include "otau_file.h"
 
@@ -14,11 +13,15 @@ OtauFile::OtauFile()
    headerVersion = 0x0100;
    headerLength = 0;
    headerFieldControl = 0x0000;
-   manufacturerCode = 0x1135;
+   manufacturerCode = 0x0000;
    imageType = 0;
    fileVersion = 0;
    zigBeeStackVersion = 0x0002; // ZigBee PRO
    totalImageSize = 0;
+   securityCredentialVersion = 0;
+   upgradeFileDestination = 0;
+   minHardwareVersion = 0;
+   maxHardwareVersion = 0;
 }
 
 /*! Packs the file in a byte array.
@@ -47,8 +50,8 @@ QByteArray OtauFile::toArray()
     totalImageSize = headerLength;
 
     {
-        std::list<SubElement>::iterator it = subElements.begin();
-        std::list<SubElement>::iterator end = subElements.end();
+        auto it = subElements.begin();
+        auto end = subElements.end();
         for (;it != end; ++it)
         {
             totalImageSize += (2 + 4); // fixed tag size
@@ -96,8 +99,8 @@ QByteArray OtauFile::toArray()
 
     // append tags
     {
-        std::list<SubElement>::iterator it = subElements.begin();
-        std::list<SubElement>::iterator end = subElements.end();
+        auto it = subElements.begin();
+        auto end = subElements.end();
         for (;it != end; ++it)
         {
             stream << it->tag;
@@ -146,7 +149,7 @@ bool OtauFile::fromArray(const QByteArray &arr)
     {
         quint8 dummy;
         stream >> dummy;
-    }
+    }   
 
     stream >> upgradeFileId;
     stream >> headerVersion;
@@ -204,7 +207,7 @@ bool OtauFile::fromArray(const QByteArray &arr)
 
     subElements.clear();
 
-    while (arr.size() - offset - processedLength >= SEGMENT_HEADER_LENGTH)
+    while (!stream.atEnd())
     {
         SubElement sub;
         int size = 0;
@@ -215,6 +218,11 @@ bool OtauFile::fromArray(const QByteArray &arr)
         stream >> sub.length;
         processedLength += 4;
 
+        if (stream.atEnd())
+        {
+            break;
+        }
+
         if (sub.length > arr.size() - offset - processedLength)
         {
             size = arr.size() - offset - processedLength;
@@ -224,18 +232,10 @@ bool OtauFile::fromArray(const QByteArray &arr)
             size = sub.length;
         }
 
-        while (!stream.atEnd())
+        sub.data.resize(size);
+        if (stream.readRawData(sub.data.data(), size) == size)
         {
-            if (sub.data.size() == size)
-            {
-                break;
-            }
-
-            uint8_t ch;
-            stream >> ch;
-            processedLength++;
-            sub.data.append(static_cast<char>(ch));
-            Q_ASSERT(sub.data.size() <= size);
+            processedLength += size;
         }
 
         if (sub.data.size() == size)
@@ -246,6 +246,7 @@ bool OtauFile::fromArray(const QByteArray &arr)
         else
         {
             DBG_Printf(DBG_OTA, "OTAU:   offset %6u: ignore tag 0x%04X with invalid length\n", start, sub.tag);
+            break; // unkown what current data is
         }
 
         // Total data process = totalImageSize, skip next segments, used only for legrand ATM
@@ -256,11 +257,12 @@ bool OtauFile::fromArray(const QByteArray &arr)
         }
 
     }
+
     if (!stream.atEnd())
     {
         DBG_Printf(DBG_OTA, "OTAU:   offset %6u: ignore trailing %d bytes\n", offset + processedLength, arr.size() - offset - processedLength);
     }
 
-    raw = arr;
+    raw = arr.mid(offset, totalImageSize);
     return !subElements.empty();
 }

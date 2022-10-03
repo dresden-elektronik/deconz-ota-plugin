@@ -131,7 +131,6 @@ public:
     uint8_t reqSequenceNumber;
     uint16_t profileId;
     uint16_t manufacturerId;
-    uint8_t maxDataSize;
     uint32_t imageSize;
     uint8_t *imageData;
     uint32_t timeout; // seconds
