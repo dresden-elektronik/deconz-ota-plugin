@@ -85,6 +85,7 @@ Image | Device(s) | Firmware | AR | DS
 011F | Hue Ensis | [1.93.11](http://fds.dc1.philips.com/firmware/ZGB_100B_011F/16784902/100B-011F-01001E06-ConfLightBLE-ModuLumV3-EFR32MG21.zigbee) | Y | Y
 0120 | Hue Go v3 (?) | [_unknown_](http://fds.dc1.philips.com/firmware/ZGB_100B_0120/16784896/100B-0120-01001E00-ConfLightBLE-PortableV3-EFR32MG21.zigbee)
 0121 | Hue tap dial switch | 2.59.19 | - | -
+0123 | Hue gradient light string | 1.101.1 | Y | Y
 0000 | Lutron Aurora<br>_Manufacturer Code_: 1144 | [3.4](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3040/Superman_v3_04_Release_3040.ota)<br>[3.8](http://fds.dc1.philips.com/firmware/ZGB_1144_0000/3080/Superman_v3_08_ProdKey_3080.ota)* | - | -
 
 \* Note that the Lutron Aurora firmware v3.8 doesn't work with deCONZ.
