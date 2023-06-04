@@ -32,8 +32,7 @@ CONFIG(release, debug|release) {
 QMAKE_CXXFLAGS += -Wno-attributes \
                   -Wall
 
-INCLUDEPATH    += ../.. \
-                  ../../common
+INCLUDEPATH    += ../../lib
 
 HEADERS  = std_otau_plugin.h \
            std_otau_widget.h \
