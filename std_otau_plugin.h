@@ -111,8 +111,6 @@ private:
     OtauModel *m_model;
     State m_state;
     quint8 m_srcEndpoint;
-    int m_sensorSlowdown;
-    bool m_hasflsNb;
     StdOtauWidget *m_w;
     quint8 m_zclSeq;
     quint8 m_maxAsduDataSize;
@@ -123,11 +121,8 @@ private:
     std::vector<OtauTracker> m_otauTracker;
     //int m_activityCounter;
     //deCONZ::Address m_activityAddress;
-    QElapsedTimer m_sensorActivity;
     int m_fastPageSpaceing;
     int m_slowPageSpaceing;
-    bool m_sensorDontStart;
-    bool m_sensorBusyRestart;
 };
 
 #endif // STD_OTAU_PLUGIN_H

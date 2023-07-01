@@ -67,9 +67,6 @@
 #define MAX_IMG_BLOCK_RSP_RETRY   10
 #define WAIT_NEXT_REQUEST_TIMEOUT 60000
 #define INVALID_APS_REQ_ID (0xff + 1) // request ids are 8-bit
-#define SENSORS_MIN_MODEL_SIZE 10
-#define SENSOR_ACTIVE_TIME (1000 * 60 * 20)
-#define SENSOR_INACTIVE_TIME (1000 * 60 * 30)
 
 #define SLOW_PAGE_SPACEING 250
 #define FAST_PAGE_SPACEING 25
@@ -117,9 +114,6 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     m_imagePageTimer = new QTimer(this);
     m_maxAsduDataSize = MAX_ASDU_SIZE;
     m_nNoAckErrors = 0;
-
-    m_hasflsNb = false;
-    m_sensorActivity.invalidate();
 
     m_imagePageTimer->setSingleShot(true);
     m_imagePageTimer->setInterval(IMAGE_PAGE_TIMER_DELAY);
@@ -169,12 +163,6 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 
     QSettings config(deCONZ::getStorageLocation(deCONZ::ConfigLocation), QSettings::IniFormat);
 
-    m_sensorSlowdown = config.value("otau/sensor-slowdown", SENSORS_MIN_MODEL_SIZE).toInt();
-    if (!config.contains("otau/sensor-slowdown"))
-    {
-        config.setValue("otau/sensor-slowdown", SENSORS_MIN_MODEL_SIZE);
-    }
-
     // slow page spacing
     bool ok = false;
     m_slowPageSpaceing = SLOW_PAGE_SPACEING;
@@ -207,28 +195,6 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     if (!ok)
     {
         config.setValue("otau/fast-page-spacing", m_fastPageSpaceing);
-    }
-
-    // don't start ota update if sensor busy
-    m_sensorDontStart = true;
-    if (config.contains("otau/sensor-dont-start"))
-    {
-        m_sensorDontStart = config.value("otau/sensor-dont-start", true).toBool();
-    }
-    else
-    {
-        config.setValue("otau/sensor-dont-start", m_sensorDontStart);
-    }
-
-    // don't restart after ota if sensor busy
-    m_sensorBusyRestart = true;
-    if (config.contains("otau/sensor-restart"))
-    {
-        m_sensorBusyRestart = config.value("otau/sensor-restart", true).toBool();
-    }
-    else
-    {
-        config.setValue("otau/sensor-restart", m_sensorBusyRestart);
     }
 
     createWidget();
@@ -265,37 +231,9 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
         matchDescriptorRequest(ind);
     }
 
-    if (m_hasflsNb && (ind.profileId() == HA_PROFILE_ID || ind.profileId() == ZLL_PROFILE_ID))
-    {
-        if (ind.clusterId() == ONOFF_CLUSTER_ID || ind.clusterId() == LEVEL_CLUSTER_ID)
-        {
-            if (ind.dstAddressMode() == deCONZ::ApsGroupAddress && ind.srcAddress().hasNwk() && ind.srcAddress().nwk() != 0x0000)
-            {
-                // slow down activity for larger networks if sensors are active
-                if (m_model->rowCount(QModelIndex()) > m_sensorSlowdown)
-                {
-                    m_sensorActivity.restart();
-
-                    if (state() != StateBusySensors && m_sensorDontStart)
-                    {
-                        setState(StateBusySensors);
-                    }
-                }
-                return;
-            }
-        }
-    }
-
     if (ind.clusterId() != OTAU_CLUSTER_ID)
     {
         return;
-    }
-
-    if (m_sensorActivity.isValid() && m_sensorActivity.elapsed() > SENSOR_INACTIVE_TIME)
-    {
-        DBG_Printf(DBG_OTA, "OTAU: sensor activity seems to have stopped\n");
-        m_sensorActivity.invalidate();
-        setState(StateEnabled);
     }
 
     deCONZ::ZclFrame zclFrame;
@@ -1153,11 +1091,6 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
         node->setHardwareVersion(0xFFFF);
     }
 
-    if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
-    {
-        m_hasflsNb = true;
-    }
-
     DBG_Printf(DBG_OTA, "OTAU: query next img req: %s mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
                qPrintable(ind.srcAddress().toStringExt()), node->manufacturerId, node->imageType(), node->softwareVersion());
 
@@ -1237,11 +1170,6 @@ bool StdOtauPlugin::queryNextImageResponse(OtauNode *node)
         {
             stream << (uint8_t)OTAU_ABORT;
             DBG_Printf(DBG_OTA, "OTAU: send query next image response: OTAU_ABORT\n");
-        }
-        else if (m_sensorDontStart && m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
-        {
-            stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-            DBG_Printf(DBG_OTA, "OTAU: send query next image response: OTAU_NO_IMAGE_AVAILABLE (sensors busy)\n");
         }
         else if (m_otauTracker.size() >= OTAU_MAX_ACTIVE)
         {
@@ -1789,7 +1717,6 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
 {
     deCONZ::ApsDataRequest req;
     deCONZ::ZclFrame zclFrame;
-    bool useDeCluster = false;
 
     DBG_Assert(node->address().hasExt());
     if (!node->address().hasExt())
@@ -1803,27 +1730,6 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
     {
         DBG_Printf(DBG_OTA,"OTAU: upgrade end response not send because status is not success but 0x%02X\n", node->upgradeEndReq.status);
         return false;
-    }
-
-/*
-    if (node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
-    {
-        if (node->softwareVersion() > 0x200000D8)
-        {
-            upgradeTime = OTA_TIME_INFINITE; // use DE Cluster for restart [1]
-            useDeCluster = true;
-
-            if (!m_sensorBusyRestart &&
-                 m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
-            {
-                useDeCluster = false;
-            }
-        }
-    }
-    else */
-    if (!m_sensorBusyRestart && m_sensorActivity.isValid() && m_sensorActivity.elapsed() < SENSOR_ACTIVE_TIME)
-    {
-        upgradeTime = OTA_TIME_INFINITE; // wait
     }
 
     req.setProfileId(node->profileId);
@@ -1873,59 +1779,6 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
             node->setStatus(OtauNode::StatusSuccess);
         }
         ret = true;
-    }
-
-    // [1] send delayed DE cluster WDT Reset command
-    if (useDeCluster &&
-        node->status() == OtauNode::StatusWaitUpgradeEnd &&
-        node->manufacturerId == VENDOR_DDEL && node->imageType() == IMG_TYPE_FLS_NB)
-    {
-        deCONZ::ApsDataRequest req2;
-
-        req2.setProfileId(node->profileId);
-        req2.setDstEndpoint(node->endpoint);
-        req2.setClusterId(DE_CLUSTER_ID);
-        req2.dstAddress() = node->address();
-        req2.setDstAddressMode(deCONZ::ApsExtAddress);
-        req2.setSrcEndpoint(m_srcEndpoint);
-        req2.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
-        req2.setRadius(MAX_RADIUS);
-        req2.setSendDelay(3000); // send 3s after upgrade end response
-
-        zclFrame.setSequenceNumber(node->reqSequenceNumber + 1);
-        zclFrame.setCommandId(0x04); // write RAM
-
-        zclFrame.setFrameControl(deCONZ::ZclFCClusterCommand |
-                                 deCONZ::ZclFCDirectionClientToServer |
-                                 deCONZ::ZclFCDisableDefaultResponse);
-
-        { // ZCL payload
-            zclFrame.payload().clear();
-            QDataStream stream(&zclFrame.payload(), QIODevice::WriteOnly);
-            stream.setByteOrder(QDataStream::LittleEndian);
-
-            quint16 offset = 0x8888;
-            quint8 dataLength = 1;
-            quint8 data0 = 1;
-            quint8 dummy = 0;
-            stream << offset;
-            stream << dataLength;
-            // payload must be 4 bytes
-            stream << data0;
-            stream << dummy;
-            stream << dummy;
-            stream << dummy;
-        }
-
-        { // ZCL frame
-            QDataStream stream(&req2.asdu(), QIODevice::WriteOnly);
-            stream.setByteOrder(QDataStream::LittleEndian);
-            zclFrame.writeToStream(stream);
-        }
-
-        if (deCONZ::ApsController::instance()->apsdeDataRequest(req2) == 0)
-        {
-        }
     }
 
     return ret;
