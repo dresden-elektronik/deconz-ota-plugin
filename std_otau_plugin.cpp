@@ -179,9 +179,6 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
         config.setValue("otau/fast-page-spacing", m_fastPageSpaceing);
     }
 
-    createWidget();
-    m_w->setPacketSpacingMs(m_fastPageSpaceing);
-
     checkFileLinks();
 }
 
@@ -1861,6 +1858,7 @@ QWidget *StdOtauPlugin::createWidget()
         connect(this, SIGNAL(stateChanged(int)), m_w, SLOT(stateChanged(int)));
 
         m_w->setOtauModel(m_model);
+        m_w->setPacketSpacingMs(m_fastPageSpaceing);
     }
 
     return m_w;
