@@ -68,7 +68,6 @@
 #define WAIT_NEXT_REQUEST_TIMEOUT 60000
 #define INVALID_APS_REQ_ID (0xff + 1) // request ids are 8-bit
 
-#define SLOW_PAGE_SPACEING 250
 #define FAST_PAGE_SPACEING 25
 #define MIN_PAGE_SPACEING 20
 #define MAX_PAGE_SPACEING 3000
@@ -163,30 +162,13 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 
     QSettings config(deCONZ::getStorageLocation(deCONZ::ConfigLocation), QSettings::IniFormat);
 
-    // slow page spacing
-    bool ok = false;
-    m_slowPageSpaceing = SLOW_PAGE_SPACEING;
-    if (config.contains("otau/slow-page-spacing"))
-    {
-        int sp = config.value("otau/slow-page-spacing", SLOW_PAGE_SPACEING).toInt(&ok);
-        if (ok && sp > FAST_PAGE_SPACEING && sp < MAX_PAGE_SPACEING)
-        {
-            m_slowPageSpaceing = sp;
-        }
-    }
-
-    if (!ok)
-    {
-        config.setValue("otau/slow-page-spacing", m_slowPageSpaceing);
-    }
-
     // fast page spacing
-    ok = false;
+    bool ok = false;
     m_fastPageSpaceing = FAST_PAGE_SPACEING;
     if (config.contains("otau/fast-page-spacing"))
     {
         int sp = config.value("otau/fast-page-spacing", FAST_PAGE_SPACEING).toInt(&ok);
-        if (ok && sp >= MIN_PAGE_SPACEING && sp < SLOW_PAGE_SPACEING && sp < MAX_PAGE_SPACEING)
+        if (ok && sp >= MIN_PAGE_SPACEING && sp < MAX_PAGE_SPACEING)
         {
             m_fastPageSpaceing = sp;
         }

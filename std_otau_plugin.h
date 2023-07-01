@@ -119,10 +119,7 @@ private:
     QTimer *m_cleanupTimer;
     QTimer *m_activityTimer;
     std::vector<OtauTracker> m_otauTracker;
-    //int m_activityCounter;
-    //deCONZ::Address m_activityAddress;
     int m_fastPageSpaceing;
-    int m_slowPageSpaceing;
 };
 
 #endif // STD_OTAU_PLUGIN_H
