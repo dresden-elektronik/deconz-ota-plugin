@@ -38,6 +38,7 @@ typedef enum
 } OtauStatus_t;
 
 class QFileSystemWatcher;
+class QTimer;
 class StdOtauWidget;
 struct OtauNode;
 struct ImageNotifyReq;
