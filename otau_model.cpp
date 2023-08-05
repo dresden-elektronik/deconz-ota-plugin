@@ -292,7 +292,7 @@ OtauNode *OtauModel::getNode(const deCONZ::Address &addr, bool create)
         node->model = this;
         m_nodes.push_back(node);
         endInsertRows();
-        DBG_Printf(DBG_OTA, "OTAU: node added %s\n", qPrintable(addr.toStringExt()));
+        DBG_Printf(DBG_OTA, "OTAU: node added " FMT_MAC "\n", FMT_MAC_CAST(addr.ext()));
         return node;
     }
 

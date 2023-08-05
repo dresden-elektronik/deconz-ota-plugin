@@ -545,7 +545,7 @@ void StdOtauPlugin::invalidateUpdateEndRequest(OtauNode *node)
     {
         if ((node->upgradeEndReq.fileVersion != 0) || (node->upgradeEndReq.manufacturerCode != 0))
         {
-            DBG_Printf(DBG_OTA, "OTAU: invalid update end request for node %s\n", qPrintable(node->address().toStringExt()));
+            DBG_Printf(DBG_OTA, "OTAU: invalid update end request for node " FMT_MAC "\n", FMT_MAC_CAST(node->address().ext()));
         }
 
         node->upgradeEndReq.status = 0;
@@ -790,7 +790,7 @@ bool StdOtauPlugin::imageNotify(ImageNotifyReq *notf)
         if (node)
         {
             req.setProfileId(node->profileId);
-            DBG_Printf(DBG_OTA, "OTAU: send img notify to %s\n", qPrintable(node->address().toStringExt()));
+            DBG_Printf(DBG_OTA, "OTAU: send img notify to " FMT_MAC "\n", FMT_MAC_CAST(node->address().ext()));
         }
         else
         {
@@ -1028,14 +1028,14 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
 
     if (!node)
     {
-        DBG_Printf(DBG_OTA, "OTAU: query next image request for unknown node %s\n", qPrintable(ind.srcAddress().toStringExt()));
+        DBG_Printf(DBG_OTA, "OTAU: query next image request for unknown node " FMT_MAC "\n", FMT_MAC_CAST(ind.srcAddress().ext()));
         return;
     }
 
     if ((zclFrame.payload().size() != 9) &&
         (zclFrame.payload().size() != 11)) // with hardware version present
     {
-        DBG_Printf(DBG_OTA, "OTAU: query next image request for node %s invalid payload length %d\n", qPrintable(ind.srcAddress().toStringExt()), zclFrame.payload().size());
+        DBG_Printf(DBG_OTA, "OTAU: query next image request for node " FMT_MAC " invalid payload length %d\n", FMT_MAC_CAST(ind.srcAddress().ext()), zclFrame.payload().size());
         return;
     }
 
@@ -1070,8 +1070,8 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
         node->setHardwareVersion(0xFFFF);
     }
 
-    DBG_Printf(DBG_OTA, "OTAU: query next img req: %s mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
-               qPrintable(ind.srcAddress().toStringExt()), node->manufacturerId, node->imageType(), node->softwareVersion());
+    DBG_Printf(DBG_OTA, "OTAU: query next img req: " FMT_MAC " mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
+               FMT_MAC_CAST(ind.srcAddress().ext()), node->manufacturerId, node->imageType(), node->softwareVersion());
 
     if (deCONZ::ApsController::instance()->getParameter(deCONZ::ParamOtauActive) != 0)
     {

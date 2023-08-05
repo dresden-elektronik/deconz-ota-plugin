@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <QtGlobal>
 #include <QByteArray>
+#include <QString>
 #include <vector>
 
 //!< Header field control bits
