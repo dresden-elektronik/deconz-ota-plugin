@@ -11,6 +11,11 @@
 #include "otau_node.h"
 #include "otau_model.h"
 
+#ifdef USE_ACTOR_MODEL
+  #include <actor/plugin.h>
+  #include <actor/cxx_helper.h>
+#endif
+
 #define VENDOR_BUSCH_JAEGER  0x112E
 #define VENDOR_DDEL          0x1135
 
@@ -75,6 +80,25 @@
 #define OTA_TIME_INFINITE                      0xFFFFFFFFUL
 #define DONT_CARE_FILE_VERSION                 0xFFFFFFFFUL
 
+/*  .ota-cache file
+
+     4096 byte pages
+
+     Entry {
+        U16 marker    // 0 = empty
+        U16 page_count
+        U16 mfcode
+        U16 image_type
+        U32 crc32
+
+        U8  filename_length
+        U8  filename[127]   // '\0' right padded
+        U8  sha256[32]
+
+     }
+
+*/
+
 const quint64 macPrefixMask       = 0xffffff0000000000ULL;
 
 // const quint64 develcoMacPrefix    = 0x0015bc0000000000ULL;
@@ -100,6 +124,102 @@ const deCONZ::SimpleDescriptor *getSimpleDescriptor(const deCONZ::Node *node, qu
 
     return nullptr;
 }
+
+#ifdef USE_ACTOR_MODEL
+
+enum CommonMessageIds
+{
+   M_ID_LIST_DIR_REQ = AM_MESSAGE_ID_COMMON_REQUEST(1),
+   M_ID_LIST_DIR_RSP = AM_MESSAGE_ID_COMMON_RESPONSE(1),
+   M_ID_READ_ENTRY_REQ = AM_MESSAGE_ID_COMMON_REQUEST(2),
+   M_ID_READ_ENTRY_RSP = AM_MESSAGE_ID_COMMON_RESPONSE(2)
+};
+
+#define AM_ACTOR_ID_OTA         9000
+#define AM_ACTOR_ID_CORE_APS    2005
+
+#define OTA_M_ID_QUERY_NEXT_IMAGE_NOTIFY AM_MESSAGE_ID_SPECIFIC_NOTIFY(0x0001)
+
+static struct am_actor am_actor_ota0;
+struct am_api_functions *am = nullptr;
+
+static int OTA_ReadEntryRequest(struct am_message *msg)
+{
+    struct am_message *m;
+
+    uint16_t tag;
+    am_string url;
+
+    uint32_t mode = 0;
+    uint64_t mtime = 0;
+
+    tag = am->msg_get_u16(msg);
+    url = am->msg_get_string(msg);
+
+    if (msg->status != AM_MSG_STATUS_OK)
+        return AM_CB_STATUS_INVALID;
+
+    m = am->msg_alloc();
+    if (!m)
+        return AM_CB_STATUS_MESSAGE_ALLOC_FAILED;
+
+    am->msg_put_u16(m, tag);
+    am->msg_put_u8(m, AM_RESPONSE_STATUS_OK);
+    am->msg_put_string(m, url.data, url.size);
+
+    if (url == ".actor/name")
+    {
+        am->msg_put_cstring(m, "str");
+        am->msg_put_u32(m, mode);
+        am->msg_put_u64(m, mtime);
+        am->msg_put_cstring(m, "ota");
+    }
+    else
+    {
+        m->pos = 0;
+    }
+
+    if (m->pos == 0)
+    {
+        am->msg_put_u16(m, tag);
+        am->msg_put_u8(m, AM_RESPONSE_STATUS_NOT_FOUND);
+    }
+
+    m->src = msg->dst;
+    m->dst = msg->src;
+    m->id = M_ID_READ_ENTRY_RSP;
+    am->send_message(m);
+
+    return AM_CB_STATUS_OK;
+}
+
+static int OTA0_MessageCallback(struct am_message *msg)
+{
+    if (msg->id == M_ID_READ_ENTRY_REQ)
+        return OTA_ReadEntryRequest(msg);
+
+    return AM_CB_STATUS_UNSUPPORTED;
+}
+
+/* actor model init entry point, called by actor model service in core */
+
+extern "C"
+#ifdef _WIN32
+__declspec(dllexport)
+#endif
+int am_plugin_init(struct am_api_functions *api)
+{
+    struct am_message *m;
+    am = api;
+
+    AM_INIT_ACTOR(&am_actor_ota0, AM_ACTOR_ID_OTA, OTA0_MessageCallback);
+    am->register_actor(&am_actor_ota0);
+    am->subscribe(AM_ACTOR_ID_CORE_APS, AM_ACTOR_ID_OTA);
+
+    return 1;
+}
+
+#endif // USE_ACTOR_MODEL
 
 /*! The constructor.
  */
@@ -1093,6 +1213,35 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
             }
         }
     }
+
+#ifdef USE_ACTOR_MODEL
+    {
+        // broadcast OTA0 QUERY_NEXT_IMAGE_NOTIFY message
+        struct am_message *m;
+
+        m = am->msg_alloc();
+        m->src = AM_ACTOR_ID_OTA;
+        m->dst = AM_ACTOR_ID_SUBSCRIBERS;
+        m->id = OTA_M_ID_QUERY_NEXT_IMAGE_NOTIFY;
+
+        am->msg_put_u64(m, (am_u64)(node->address().ext()));
+        am->msg_put_u16(m, node->manufacturerId);
+        am->msg_put_u16(m, node->imageType());
+        am->msg_put_u32(m, node->softwareVersion());
+        am->msg_put_u16(m, (unsigned short)node->hardwareVersion());
+
+        if (node->hasData())
+        {
+            am->msg_put_u32(m, node->file.fileVersion);
+        }
+        else
+        {
+            am->msg_put_u32(m, 0);
+        }
+
+        am->send_message(m);
+    }
+#endif // USE_ACTOR_MODEL
 
     if (node->hasData() && node->rxOnWhenIdle)
     { // sleeping devices must be manually enabled

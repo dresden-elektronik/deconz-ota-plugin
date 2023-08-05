@@ -2,7 +2,8 @@ TARGET   = std_otau_plugin
 
 TARGET = $$qtLibraryTarget($$TARGET)
 
-DEFINES += DECONZ_DLLSPEC=Q_DECL_IMPORT
+DEFINES += USE_ULIB_SHARED=1 \
+           USE_ACTOR_MODEL
 
 unix:contains(QMAKE_HOST.arch, armv6l) {
     DEFINES += ARCH_ARM ARCH_ARMV6
@@ -33,7 +34,8 @@ QMAKE_CXXFLAGS += -Wno-attributes \
                   -Wall
 
 INCLUDEPATH    += ../../lib \
-                  ../..
+                  ../.. \
+                  ../../3rdparty/actor_model
 
 HEADERS  = std_otau_plugin.h \
            std_otau_widget.h \

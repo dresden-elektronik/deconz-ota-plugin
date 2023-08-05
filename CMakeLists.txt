@@ -30,6 +30,23 @@ if (NOT deconzlib_POPULATED)
     add_subdirectory(${deconzlib_SOURCE_DIR} ${deconzlib_BINARY_DIR})
 endif()
 
+# --- actor model -----------------------------------------------------
+
+FetchContent_Declare(
+  actormodel
+  GIT_REPOSITORY https://git.sr.ht/~cryo/actor_model
+  GIT_TAG        master
+)
+
+# FetchContent_MakeAvailable(actormodel)
+# FetchContent_MakeAvailable requires CMake 3.14, but Debian Buster has only 3.13
+
+FetchContent_GetProperties(actormodel)
+if (NOT actormodel_POPULATED)
+    FetchContent_Populate(actormodel)
+    add_subdirectory(${actormodel_SOURCE_DIR} ${actormodel_BINARY_DIR})
+endif()
+
 #----------------------------------------------------------------------
 
 set(PLUGIN_INCLUDE_FILES
@@ -54,13 +71,14 @@ add_library(${PROJECT_NAME} SHARED
     otau_node.cpp
 )
 
-# target_compile_definitions(${PROJECT_NAME} PRIVATE )
+target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ACTOR_MODEL)
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE Qt5::Core
     PRIVATE Qt5::Gui
     PRIVATE Qt5::Widgets
     PRIVATE deCONZLib
+    am_plugin_hdr
 )
 
 #--------------------------------------------------------------

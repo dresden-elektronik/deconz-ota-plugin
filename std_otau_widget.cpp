@@ -13,6 +13,37 @@
 
 #define UNLIMITED_WATING_TIME 0xfffffffful
 
+#ifdef USE_ACTOR_MODEL
+
+#include <actor/plugin.h>
+
+// am_api is defined in std_otau_plugin.cpp
+// in future the widget might become its own plugin
+extern struct am_api_functions *am;
+#define AM_ACTOR_ID_OTA    9000
+#define AM_ACTOR_ID_OTA_UI 9001
+
+#define OTA_M_ID_QUERY_NEXT_IMAGE_NOTIFY AM_MESSAGE_ID_SPECIFIC_NOTIFY(0x0001)
+
+static struct am_actor am_actor_oui0;
+static struct am_message out_msg;
+static unsigned char out_data[4096];
+
+static int OUI0_MessageCallback(struct am_message *msg)
+{
+    if (msg->src == AM_ACTOR_ID_OTA)
+    {
+        if (msg->id == OTA_M_ID_QUERY_NEXT_IMAGE_NOTIFY)
+        {
+            DBG_Printf(DBG_OTA, "OTAU: received QUERY_NEXT_IMAGE_NOTIFY\n");
+            return AM_CB_STATUS_OK;
+        }
+    }
+
+    return AM_CB_STATUS_UNSUPPORTED;
+}
+#endif // USE_ACTOR_MODEL
+
 StdOtauWidget::StdOtauWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::StdOtauWidget)
@@ -50,6 +81,15 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
 
     ui->tableView->setSortingEnabled(true);
     ui->tableView->setStyleSheet("QTableView::item { border: 0px; padding-left: 2px; padding-right: 2px; padding-top: 0px; padding-bottom: 0px; }");
+
+#ifdef USE_ACTOR_MODEL
+    if (am)
+    {
+        AM_INIT_ACTOR(&am_actor_oui0, AM_ACTOR_ID_OTA_UI, OUI0_MessageCallback);
+        am->register_actor(&am_actor_oui0);
+        am->subscribe(AM_ACTOR_ID_OTA, AM_ACTOR_ID_OTA_UI);
+    }
+#endif
 }
 
 StdOtauWidget::~StdOtauWidget()
