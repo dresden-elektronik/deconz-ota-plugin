@@ -17,6 +17,8 @@ find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
 include(FetchContent)
 
+if (NOT DECONZ_FULL_BUILD)
+
 FetchContent_Declare(
   deconzlib
   GIT_REPOSITORY https://github.com/dresden-elektronik/deconz-lib.git
@@ -47,6 +49,7 @@ if (NOT actormodel_POPULATED)
     add_subdirectory(${actormodel_SOURCE_DIR} ${actormodel_BINARY_DIR})
 endif()
 
+endif() # NOT DECONZ_FULL_BUILD
 #----------------------------------------------------------------------
 
 set(PLUGIN_INCLUDE_FILES
