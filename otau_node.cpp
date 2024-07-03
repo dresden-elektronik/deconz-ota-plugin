@@ -28,6 +28,8 @@ OtauNode::OtauNode(const deCONZ::Address &addr)
     endpoint = 0xFF; // for unicast if endpoint not known
     endpointNotify = 0;
     rxOnWhenIdle = true;
+    imgBlockReq = {};
+    imgPageReq = {};
 }
 
 /*! Sets the nodes state.

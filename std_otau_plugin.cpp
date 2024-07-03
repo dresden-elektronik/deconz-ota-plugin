@@ -1814,6 +1814,15 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
 
     if (node->upgradeEndReq.status == OTAU_SUCCESS)
     {
+        if (node->imgBlockReq.offset == 0)
+        {
+            // This is a workaround for buggy Osram/Ledvance Plug Z3 firmware (maybe Plug 01 as well)
+            // it sends upgrade end request _without_ any update happening before,
+            // send a ABORT status to break the reboot cycle.
+            defaultResponse(node, zclFrame.commandId(), OTAU_ABORT);
+            return;
+        }
+
         node->setStatus(OtauNode::StatusWaitUpgradeEnd);
         node->setOffset(node->file.totalImageSize); // mark done
 
