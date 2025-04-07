@@ -11,10 +11,9 @@
 #include "otau_node.h"
 #include "otau_model.h"
 
-#ifdef USE_ACTOR_MODEL
-  #include <actor/plugin.h>
-  #include <actor/cxx_helper.h>
-#endif
+#include <actor/plugin.h>
+#include <actor/cxx_helper.h>
+#include "deconz/am_vfs.h"
 
 #define VENDOR_BUSCH_JAEGER  0x112E
 #define VENDOR_DDEL          0x1135
@@ -127,14 +126,6 @@ const deCONZ::SimpleDescriptor *getSimpleDescriptor(const deCONZ::Node *node, qu
 
 #ifdef USE_ACTOR_MODEL
 
-enum CommonMessageIds
-{
-   M_ID_LIST_DIR_REQ = AM_MESSAGE_ID_COMMON_REQUEST(1),
-   M_ID_LIST_DIR_RSP = AM_MESSAGE_ID_COMMON_RESPONSE(1),
-   M_ID_READ_ENTRY_REQ = AM_MESSAGE_ID_COMMON_REQUEST(2),
-   M_ID_READ_ENTRY_RSP = AM_MESSAGE_ID_COMMON_RESPONSE(2)
-};
-
 #define AM_ACTOR_ID_OTA         9000
 #define AM_ACTOR_ID_CORE_APS    2005
 
@@ -165,7 +156,6 @@ static int OTA_ReadEntryRequest(struct am_message *msg)
 
     am->msg_put_u16(m, tag);
     am->msg_put_u8(m, AM_RESPONSE_STATUS_OK);
-    am->msg_put_string(m, url.data, url.size);
 
     if (url == ".actor/name")
     {
@@ -187,7 +177,7 @@ static int OTA_ReadEntryRequest(struct am_message *msg)
 
     m->src = msg->dst;
     m->dst = msg->src;
-    m->id = M_ID_READ_ENTRY_RSP;
+    m->id = VFS_M_ID_READ_ENTRY_RSP;
     am->send_message(m);
 
     return AM_CB_STATUS_OK;
@@ -195,7 +185,7 @@ static int OTA_ReadEntryRequest(struct am_message *msg)
 
 static int OTA0_MessageCallback(struct am_message *msg)
 {
-    if (msg->id == M_ID_READ_ENTRY_REQ)
+    if (msg->id == VFS_M_ID_READ_ENTRY_REQ)
         return OTA_ReadEntryRequest(msg);
 
     return AM_CB_STATUS_UNSUPPORTED;
