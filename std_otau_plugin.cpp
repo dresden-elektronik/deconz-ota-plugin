@@ -194,9 +194,7 @@ static int OTA0_MessageCallback(struct am_message *msg)
 /* actor model init entry point, called by actor model service in core */
 
 extern "C"
-#ifdef _WIN32
-__declspec(dllexport)
-#endif
+DECONZ_DLLSPEC
 int am_plugin_init(struct am_api_functions *api)
 {
     struct am_message *m;
@@ -1205,6 +1203,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     }
 
 #ifdef USE_ACTOR_MODEL
+    if (am)
     {
         // broadcast OTA0 QUERY_NEXT_IMAGE_NOTIFY message
         struct am_message *m;
