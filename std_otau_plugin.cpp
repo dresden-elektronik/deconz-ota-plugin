@@ -192,9 +192,7 @@ static int OTA0_MessageCallback(struct am_message *msg)
 }
 
 /* actor model init entry point, called by actor model service in core */
-
-extern "C"
-DECONZ_DLLSPEC
+extern "C" DECONZ_EXPORT
 int am_plugin_init(struct am_api_functions *api)
 {
     struct am_message *m;
