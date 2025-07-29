@@ -80,7 +80,6 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
             this, SLOT(openClicked()));
 
     ui->tableView->setSortingEnabled(true);
-    ui->tableView->setStyleSheet("QTableView::item { border: 0px; padding-left: 2px; padding-right: 2px; padding-top: 0px; padding-bottom: 0px; }");
 
 #ifdef USE_ACTOR_MODEL
     if (am)
