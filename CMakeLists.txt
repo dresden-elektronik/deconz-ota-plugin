@@ -14,7 +14,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+if (QT_VERSION_MAJOR EQUAL 6)
+    find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
+else()
+    find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+endif()
+
 
 #--- deCONZ library ---------------------------------------------------
 
@@ -80,9 +85,9 @@ add_library(${PROJECT_NAME} SHARED
 target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ACTOR_MODEL)
 
 target_link_libraries(${PROJECT_NAME}
-    PRIVATE Qt5::Core
-    PRIVATE Qt5::Gui
-    PRIVATE Qt5::Widgets
+    PRIVATE Qt${QT_VERSION_MAJOR}::Core
+    PRIVATE Qt${QT_VERSION_MAJOR}::Gui
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
     PRIVATE deCONZLib
     am_plugin_hdr
 )

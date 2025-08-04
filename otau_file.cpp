@@ -1,4 +1,5 @@
 #include <QDataStream>
+#include <QIODevice>
 #include <deconz.h>
 #include "otau_file.h"
 
