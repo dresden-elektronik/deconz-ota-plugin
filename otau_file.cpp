@@ -106,7 +106,7 @@ QByteArray OtauFile::toArray()
         {
             stream << it->tag;
             stream << it->length;
-            DBG_Printf(DBG_OTA, "OTAU:   tag 0x%04X, length 0x%08X (%d bytes)\n", it->tag, it->length, it->data.size() + SEGMENT_HEADER_LENGTH);
+            DBG_Printf(DBG_OTA, "OTAU:   tag 0x%04X, length 0x%08X (%d bytes)\n", it->tag, it->length, (int)(it->data.size() + SEGMENT_HEADER_LENGTH));
 
             for (int i = 0; i < it->data.size(); i++)
             {
@@ -115,7 +115,7 @@ QByteArray OtauFile::toArray()
         }
     }
 
-    DBG_Printf(DBG_OTA, "OTAU:   packed %d bytes\n", arr.length());
+    DBG_Printf(DBG_OTA, "OTAU:   packed %d bytes\n", (int)arr.length());
 
     return arr;
 }
@@ -125,7 +125,7 @@ QByteArray OtauFile::toArray()
  */
 bool OtauFile::fromArray(const QByteArray &arr)
 {
-    DBG_Printf(DBG_OTA, "OTAU: %s: %d bytes\n", qPrintable(path), arr.length());
+    DBG_Printf(DBG_OTA, "OTAU: %s: %d bytes\n", qPrintable(path), (int)arr.length());
 
     if (arr.size() < MANDATORY_HEADER_LENGTH)
     {
@@ -261,7 +261,7 @@ bool OtauFile::fromArray(const QByteArray &arr)
 
     if (!stream.atEnd())
     {
-        DBG_Printf(DBG_OTA, "OTAU:   offset %6u: ignore trailing %d bytes\n", offset + processedLength, arr.size() - offset - processedLength);
+        DBG_Printf(DBG_OTA, "OTAU:   offset %6u: ignore trailing %d bytes\n", offset + processedLength, (int)(arr.size() - offset - processedLength));
     }
 
     raw = arr.mid(offset, totalImageSize);
