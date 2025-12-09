@@ -1043,7 +1043,7 @@ void StdOtauPlugin::matchDescriptorRequest(const deCONZ::ApsDataIndication &ind)
 
     if (ind.asdu().size() < 7) // minimum size for match descriptor request
     {
-        DBG_Printf(DBG_OTA, "OTAU: ignore match descriptor req from 0x%04X with asduSize %d\n", ind.srcAddress().nwk(), ind.asdu().size());
+        DBG_Printf(DBG_OTA, "OTAU: ignore match descriptor req from 0x%04X with asduSize %d\n", ind.srcAddress().nwk(), (int)ind.asdu().size());
     }
 
     {
@@ -1141,7 +1141,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     if ((zclFrame.payload().size() != 9) &&
         (zclFrame.payload().size() != 11)) // with hardware version present
     {
-        DBG_Printf(DBG_OTA, "OTAU: query next image request for node " FMT_MAC " invalid payload length %d\n", FMT_MAC_CAST(ind.srcAddress().ext()), zclFrame.payload().size());
+        DBG_Printf(DBG_OTA, "OTAU: query next image request for node " FMT_MAC " invalid payload length %d\n", FMT_MAC_CAST(ind.srcAddress().ext()), (int)zclFrame.payload().size());
         return;
     }
 
