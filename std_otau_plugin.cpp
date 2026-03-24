@@ -366,7 +366,7 @@ void StdOtauPlugin::apsdeDataIndication(const deCONZ::ApsDataIndication &ind)
             case OTAU_IMAGE_PAGE_REQUEST_CMD_ID:
             case OTAU_UPGRADE_END_REQUEST_CMD_ID:
             case OTAU_UPGRADE_END_RESPONSE_CMD_ID:
-                DBG_Printf(DBG_OTA, "OTAU: 0x%016llX default rsp cmd: 0x%02X, status 0x%02X, seq: %u\n", ind.srcAddress().ext(), zclFrame.defaultResponseCommandId(), (uint8_t)zclFrame.defaultResponseStatus(), zclFrame.sequenceNumber());
+                DBG_Printf(DBG_OTA, "OTAU: " FMT_MAC " default rsp cmd: 0x%02X, status 0x%02X, seq: %u\n", FMT_MAC_CAST(ind.srcAddress().ext()), zclFrame.defaultResponseCommandId(), (uint8_t)zclFrame.defaultResponseStatus(), zclFrame.sequenceNumber());
                 break;
 
             default:
@@ -1487,17 +1487,17 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         {
             stream << (uint8_t)OTAU_ABORT;
             node->setState(OtauNode::NodeAbort);
-            DBG_Printf(DBG_OTA, "OTAU: send img block 0x%016llX OTAU_ABORT\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "OTAU: send img block " FMT_MAC " OTAU_ABORT\n", FMT_MAC_CAST(node->address().ext()));
         }
         else if (node->state() == OtauNode::NodeAbort)
         {
             stream << (uint8_t)OTAU_ABORT;
-            DBG_Printf(DBG_OTA, "OTAU: send img block 0x%016llX OTAU_ABORT\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "OTAU: send img block " FMT_MAC " OTAU_ABORT\n", FMT_MAC_CAST(node->address().ext()));
         }
         else if (!node->permitUpdate() || !node->hasData())
         {
             stream << (uint8_t)OTAU_NO_IMAGE_AVAILABLE;
-            DBG_Printf(DBG_OTA, "OTAU: send img block 0x%016llX OTAU_NO_IMAGE_AVAILABLE\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "OTAU: send img block " FMT_MAC " OTAU_NO_IMAGE_AVAILABLE\n", FMT_MAC_CAST(node->address().ext()));
         }
         else if (node->imgBlockReq.offset < (uint32_t)node->rawFile.size())
         {
@@ -1534,7 +1534,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
                 if (dataSize == 0)
                 {
                     // dont send empty block response
-                    DBG_Printf(DBG_OTA, "OTAU: prevent img block rsp with dataSize = 0 0x%016llX\n", node->address().ext());
+                    DBG_Printf(DBG_OTA, "OTAU: prevent img block rsp with dataSize = 0 " FMT_MAC "\n", FMT_MAC_CAST(node->address().ext()));
                     return false;
                 }
             }
@@ -1548,7 +1548,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
 
             if (dataSize == 0)
             {
-                DBG_Printf(DBG_OTA, "OTAU: warn img block rsp with dataSize = 0 0x%016llX\n", node->address().ext());
+                DBG_Printf(DBG_OTA, "OTAU: warn img block rsp with dataSize = 0 " FMT_MAC "\n", FMT_MAC_CAST(node->address().ext()));
             }
 
             stream << dataSize;
@@ -1562,7 +1562,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
         }
         else
         {
-            DBG_Printf(DBG_OTA, "OTAU: send img block  0x%016llX OTAU_MALFORMED_COMMAND\n", node->address().ext());
+            DBG_Printf(DBG_OTA, "OTAU: send img block " FMT_MAC " OTAU_MALFORMED_COMMAND\n", FMT_MAC_CAST(node->address().ext()));
             stream << (uint8_t)OTAU_MALFORMED_COMMAND;
         }
     }
@@ -1577,7 +1577,7 @@ bool StdOtauPlugin::imageBlockResponse(OtauNode *node)
     {
         if (zclFrame.payload().size() > 1)
         {
-            DBG_Printf(DBG_OTA, "OTAU: send img block rsp seq: %u offset: 0x%08X dataSize %u status: 0x%02X 0x%016llX\n", zclFrame.sequenceNumber(), node->imgBlockReq.offset, dataSize, quint8(zclFrame.payload().at(0)), node->address().ext());
+            DBG_Printf(DBG_OTA, "OTAU: send img block rsp seq: %u offset: 0x%08X dataSize %u status: 0x%02X " FMT_MAC "\n", zclFrame.sequenceNumber(), node->imgBlockReq.offset, dataSize, quint8(zclFrame.payload().at(0)), FMT_MAC_CAST(node->address().ext()));
         }
 
         node->apsRequestId = req.id();
