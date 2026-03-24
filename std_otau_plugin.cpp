@@ -13,7 +13,16 @@
 
 #include <actor/plugin.h>
 #include <actor/cxx_helper.h>
-#include "deconz/am_vfs.h"
+#include <deconz/aps_controller.h>
+#include <deconz/dbg_trace.h>
+#include <deconz/zdp_descriptors.h>
+#include <deconz/zdp_profile.h>
+#include <deconz/node.h>
+#include <deconz/util.h>
+#include <deconz/am_vfs.h>
+#include <deconz/u_sha512.h>
+#include <deconz/u_memory.h>
+#include <deconz/u_sstream.h>
 
 #define VENDOR_BUSCH_JAEGER  0x112E
 #define VENDOR_DDEL          0x1135

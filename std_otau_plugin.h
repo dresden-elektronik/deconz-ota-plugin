@@ -3,9 +3,12 @@
 
 #include <QObject>
 #include <QElapsedTimer>
-#include <list>
-#include "deconz.h"
-#include "otau_file.h"
+
+#include <deconz/types.h>
+#include <deconz/aps.h>
+#include <deconz/zcl.h>
+#include <deconz/node_interface.h>
+#include <deconz/node_event.h>
 
 #define ONOFF_CLUSTER_ID 0x0006
 #define LEVEL_CLUSTER_ID 0x0008

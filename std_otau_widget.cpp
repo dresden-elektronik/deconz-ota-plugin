@@ -3,7 +3,9 @@
 #include <QFileDialog>
 #include <QTimer>
 #include <QSortFilterProxyModel>
-#include <stdint.h>
+#include <deconz/aps_controller.h>
+#include <deconz/dbg_trace.h>
+#include <deconz/util.h>
 #include "std_otau_widget.h"
 #include "std_otau_plugin.h"
 #include "otau_file_loader.h"
