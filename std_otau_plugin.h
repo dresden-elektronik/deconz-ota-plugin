@@ -101,6 +101,8 @@ public Q_SLOTS:
     void imagePageTimerFired();
     void cleanupTimerFired();
     void activityTimerFired();
+    void downloadTimerFired();
+    void onDownloadedIndex(const uint8_t *data, unsigned size);
     void markOtauActivity(const deCONZ::Address &address);
     void checkFileLinks();
 
@@ -108,8 +110,17 @@ Q_SIGNALS:
     void stateChanged(int state);
 
 private:
+    enum DownloadState
+    {
+        DownloadStateInitial,
+        DownloadStateLoadIndex,
+        DownloadStateIdle,
+    };
+
     void setState(State state);
     void checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoint);
+    bool m_downloadsEnabled = false;
+    QString m_downloadIndexUrl;
     deCONZ::Address m_delayedImageNotifyAddr;
     QString m_imgPath;
     OtauModel *m_model;
@@ -122,6 +133,10 @@ private:
     QTimer *m_imagePageTimer;
     QTimer *m_cleanupTimer;
     QTimer *m_activityTimer;
+    QTimer *m_downloadTimer;
+    int m_downloadHandle = 0;
+    QString m_downloadIndexPath;
+    DownloadState m_downloadState = DownloadStateInitial;
     std::vector<OtauTracker> m_otauTracker;
     int m_fastPageSpaceing;
 };
