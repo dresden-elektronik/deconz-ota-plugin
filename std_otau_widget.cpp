@@ -55,6 +55,10 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
     // OTAU update tab
     m_ouNode = nullptr;
 
+    connect(ui->checkBoxAdvanced, &QCheckBox::clicked, this, &StdOtauWidget::advancedToggled);
+
+    connect(ui->ou_checkOnlineButton, &QPushButton::clicked, this, &StdOtauWidget::checkOnlineOtaFiles);
+
     connect(ui->ou_queryButton, SIGNAL(clicked()),
             this, SLOT(queryClicked()));
 
@@ -82,6 +86,7 @@ StdOtauWidget::StdOtauWidget(QWidget *parent) :
             this, SLOT(openClicked()));
 
     ui->tableView->setSortingEnabled(true);
+    ui->widgetAdvanced->setVisible(ui->checkBoxAdvanced->isChecked());
 
 #ifdef USE_ACTOR_MODEL
     if (am)
@@ -315,6 +320,11 @@ void StdOtauWidget::otauTableActivated(const QModelIndex &index)
     {
         emit activatedNodeAtRow(proxyModel->mapToSource(index).row());
     }
+}
+
+void StdOtauWidget::advancedToggled()
+{
+    ui->widgetAdvanced->setVisible(ui->checkBoxAdvanced->isChecked());
 }
 
 void StdOtauWidget::saveClicked()

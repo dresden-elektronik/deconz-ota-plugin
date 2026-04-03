@@ -569,6 +569,7 @@ void StdOtauPlugin::nodeSelected(const deCONZ::Node *node)
     OtauNode *otauNode = m_model->getNode(node->address());
     if (otauNode != nullptr)
     {
+        m_selectedNodeAddress = node->address();
         m_w->displayNode(otauNode, m_model->index(otauNode->row, 0));
     }
     else
@@ -901,13 +902,15 @@ void StdOtauPlugin::downloadTimerFired()
         {
             QFile::remove(m_downloadIndexPath);
         }
-        m_downloadHandle = N_Download(qPrintable(m_downloadIndexUrl), 1 << 21, downloadIndexCallback, this);
+        unsigned maxFileSize = 1 << 21; // 2 MB, should be plenty enough
+        m_downloadHandle = N_Download(qPrintable(m_downloadIndexUrl), maxFileSize, downloadIndexCallback, this);
         m_downloadState = DownloadStateLoadIndex;
         m_downloadTimer->start(20000);
     }
     else if (m_downloadState == DownloadStateLoadIndex)
     {
-        DBG_Printf(DBG_INFO, "OTAU: failed to download OTA index\n");
+        DBG_Printf(DBG_ERROR, "OTAU: failed to download OTA index\n");
+        m_downloadState = DownloadStateInitial;
     }
     else if (m_downloadState == DownloadStateIdle)
     {
@@ -919,6 +922,8 @@ void StdOtauPlugin::downloadTimerFired()
         };
 
         std::vector<KOP> known;
+
+        m_downloadState = DownloadStateInitial;
 
         {
             auto i = m_model->nodes().cbegin();
@@ -1062,7 +1067,12 @@ void StdOtauPlugin::downloadTimerFired()
 
 void StdOtauPlugin::onDownloadedIndex(const uint8_t *data, unsigned int size)
 {
-    if (data && 512 < size && m_downloadState == DownloadStateLoadIndex)
+    bool ok = false;
+
+    if (m_downloadState != DownloadStateLoadIndex)
+        return; // should not happen
+
+    if (data && 512 < size)
     {
         DBG_Printf(DBG_OTA, "OTAU: downloaded index file: %u kB\n", size / 1000);
         QFile f(m_downloadIndexPath);
@@ -1070,12 +1080,17 @@ void StdOtauPlugin::onDownloadedIndex(const uint8_t *data, unsigned int size)
         {
             f.write((const char*)data, size);
             f.close();
-        }
+            ok = true;
+            broadcastImageNotify();
+            m_downloadTimer->stop();
+            m_downloadState = DownloadStateIdle;
+            m_downloadTimer->start(50);
+        }        
+    }
 
-        broadcastImageNotify();
-        m_downloadTimer->stop();
-        m_downloadState = DownloadStateIdle;
-        m_downloadTimer->start(5000);
+    if (!ok)
+    {
+        m_downloadState = DownloadStateInitial;
     }
 }
 
@@ -1236,71 +1251,87 @@ void StdOtauPlugin::checkFileLinks()
     }
 }
 
+/*! Executed when check online button is clicked */
+void StdOtauPlugin::downloadOtaFiles()
+{
+    if (m_downloadState == DownloadStateInitial)
+    {
+        m_downloadsEnabled = true;
+        m_downloadTimer->start(10);
+
+        if (m_selectedNodeAddress.hasExt())
+        {
+            unicastImageNotify(m_selectedNodeAddress);
+        }
+        else
+        {
+            broadcastImageNotify();
+        }
+    }
+}
+
 /*! Sends a image notify request.
     \param notf - the request parameters
     \return true on success false otherwise
  */
 bool StdOtauPlugin::imageNotify(ImageNotifyReq *notf)
 {
-    if (m_state == StateEnabled)
+    deCONZ::ApsDataRequest req;
+    deCONZ::ZclFrame zclFrame;
+
+    OtauNode *node = nullptr;
+
+    if (notf->addrMode == deCONZ::ApsExtAddress)
+        node = m_model->getNode(notf->addr);
+
+    req.setDstAddressMode(notf->addrMode);
+    req.dstAddress() = notf->addr;
+    req.setDstEndpoint(notf->dstEndpoint);
+    req.setSrcEndpoint(m_srcEndpoint);
+    if (node)
     {
-        deCONZ::ApsDataRequest req;
-        deCONZ::ZclFrame zclFrame;
+        req.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
+        req.setProfileId(node->profileId);
+        DBG_Printf(DBG_OTA, "OTAU: send img notify to " FMT_MAC "\n", FMT_MAC_CAST(node->address().ext()));
+    }
+    else
+    {
+        req.setProfileId(0x0104);
+    }
+    req.setClusterId(OTAU_CLUSTER_ID);
 
-        OtauNode *node = nullptr;
+    req.setRadius(notf->radius);
 
-        if (notf->addrMode == deCONZ::ApsExtAddress)
-            node = m_model->getNode(notf->addr);
+    zclFrame.setSequenceNumber(m_zclSeq++);
+    zclFrame.setCommandId(OTAU_IMAGE_NOTIFY_CMD_ID);
 
-        req.setDstAddressMode(notf->addrMode);
-        req.dstAddress() = notf->addr;
-        req.setDstEndpoint(notf->dstEndpoint);
-        req.setSrcEndpoint(m_srcEndpoint);
-        if (node)
-        {
-            req.setTxOptions(deCONZ::ApsTxAcknowledgedTransmission);
-            req.setProfileId(node->profileId);
-            DBG_Printf(DBG_OTA, "OTAU: send img notify to " FMT_MAC "\n", FMT_MAC_CAST(node->address().ext()));
-        }
-        else
-        {
-            req.setProfileId(0x0104);
-        }
-        req.setClusterId(OTAU_CLUSTER_ID);
+    uint8_t frameControl = deCONZ::ZclFCClusterCommand |
+            deCONZ::ZclFCDirectionServerToClient;
 
-        req.setRadius(notf->radius);
+    if (notf->addr.isNwkBroadcast())
+    {
+        frameControl |= deCONZ::ZclFCDisableDefaultResponse;
+    }
 
-        zclFrame.setSequenceNumber(m_zclSeq++);
-        zclFrame.setCommandId(OTAU_IMAGE_NOTIFY_CMD_ID);
+    zclFrame.setFrameControl(frameControl);
 
-        uint8_t frameControl = deCONZ::ZclFCClusterCommand |
-                deCONZ::ZclFCDirectionServerToClient;
+    { // ZCL payload
+        QDataStream stream(&zclFrame.payload(), QIODevice::WriteOnly);
+        stream.setByteOrder(QDataStream::LittleEndian);
 
-        if (notf->addr.isNwkBroadcast())
-        {
-            frameControl |= deCONZ::ZclFCDisableDefaultResponse;
-        }
+        stream << static_cast<quint8>(0x00); // query jitter
+        stream << static_cast<quint8>(100); // query jitter value
+    }
 
-        zclFrame.setFrameControl(frameControl);
+    { // ZCL frame
+        QDataStream stream(&req.asdu(), QIODevice::WriteOnly);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        zclFrame.writeToStream(stream);
+    }
 
-        { // ZCL payload
-            QDataStream stream(&zclFrame.payload(), QIODevice::WriteOnly);
-            stream.setByteOrder(QDataStream::LittleEndian);
-
-            stream << static_cast<quint8>(0x00); // query jitter
-            stream << static_cast<quint8>(100); // query jitter value
-        }
-
-        { // ZCL frame
-            QDataStream stream(&req.asdu(), QIODevice::WriteOnly);
-            stream.setByteOrder(QDataStream::LittleEndian);
-            zclFrame.writeToStream(stream);
-        }
-
-        if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == deCONZ::Success)
-        {
-            return true;
-        }
+    if (deCONZ::ApsController::instance()->apsdeDataRequest(req) == deCONZ::Success)
+    {
+        return true;
     }
 
     return false;
@@ -2351,6 +2382,8 @@ QWidget *StdOtauPlugin::createWidget()
     if (!m_w)
     {
         m_w = new StdOtauWidget(nullptr);
+
+        connect(m_w, &StdOtauWidget::checkOnlineOtaFiles, this, &StdOtauPlugin::downloadOtaFiles);
 
         connect(m_w, SIGNAL(unicastImageNotify(deCONZ::Address)),
                 this, SLOT(unicastImageNotify(deCONZ::Address)));

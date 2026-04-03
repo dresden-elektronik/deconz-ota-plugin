@@ -105,6 +105,7 @@ public Q_SLOTS:
     void onDownloadedIndex(const uint8_t *data, unsigned size);
     void markOtauActivity(const deCONZ::Address &address);
     void checkFileLinks();
+    void downloadOtaFiles();
 
 Q_SIGNALS:
     void stateChanged(int state);
@@ -120,6 +121,7 @@ private:
     void setState(State state);
     void checkIfNewOtauNode(const deCONZ::Node *node, uint8_t endpoint);
     bool m_downloadsEnabled = false;
+    deCONZ::Address m_selectedNodeAddress;
     QString m_downloadIndexUrl;
     deCONZ::Address m_delayedImageNotifyAddr;
     QString m_imgPath;
