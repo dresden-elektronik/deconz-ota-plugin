@@ -135,7 +135,7 @@ const deCONZ::SimpleDescriptor *getSimpleDescriptor(const deCONZ::Node *node, qu
 #define AM_ACTOR_ID_OTA         9000
 #define AM_ACTOR_ID_CORE_APS    2005
 
-#define OTA_M_ID_QUERY_NEXT_IMAGE_NOTIFY AM_MESSAGE_ID_SPECIFIC_NOTIFY(0x0001)
+#define OTA_M_ID_OTA_AVAILABLE_NOTIFY AM_MESSAGE_ID_SPECIFIC_NOTIFY(0x0001)
 
 static struct am_actor am_actor_ota0;
 struct am_api_functions *am = nullptr;
@@ -731,7 +731,6 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node)
         {
             node->setHasData(true);
             DBG_Printf(DBG_OTA, "OTAU: found update file %s\n", qPrintable(updateFile));
-            return true;
         }
         else
         {
@@ -740,7 +739,42 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node)
         }
     }
 
-    return false;
+#ifdef USE_ACTOR_MODEL
+    if (am)
+    {
+        // broadcast OTA0 OTA_M_ID_OTA_AVAILABLE_NOTIFY message
+        struct am_message *m;
+
+        m = am->msg_alloc();
+        if (m)
+        {
+            m->src = AM_ACTOR_ID_OTA;
+            m->dst = AM_ACTOR_ID_SUBSCRIBERS;
+            m->id = OTA_M_ID_OTA_AVAILABLE_NOTIFY;
+
+            am->msg_put_u64(m, (am_u64)(node->address().ext()));
+            am->msg_put_u16(m, node->manufacturerId);
+            am->msg_put_u16(m, node->imageType());
+            am->msg_put_u32(m, node->softwareVersion());
+            am->msg_put_u16(m, (unsigned short)node->hardwareVersion());
+            am->msg_put_u8(m, node->permitUpdate());
+
+            if (node->hasData())
+            {
+                am->msg_put_u16(m, 1); // count
+                am->msg_put_u32(m, node->file.fileVersion);
+            }
+            else
+            {
+                am->msg_put_u16(m, 0); // count
+            }
+
+            am->send_message(m);
+        }
+    }
+#endif // USE_ACTOR_MODEL
+
+    return node->hasData();
 }
 
 /*! Invalidates the upgrade end request.
@@ -1767,41 +1801,6 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
             }
         }
     }
-
-#ifdef USE_ACTOR_MODEL
-    if (am)
-    {
-        // broadcast OTA0 QUERY_NEXT_IMAGE_NOTIFY message
-        struct am_message *m;
-
-        m = am->msg_alloc();
-        m->src = AM_ACTOR_ID_OTA;
-        m->dst = AM_ACTOR_ID_SUBSCRIBERS;
-        m->id = OTA_M_ID_QUERY_NEXT_IMAGE_NOTIFY;
-
-        am->msg_put_u64(m, (am_u64)(node->address().ext()));
-        am->msg_put_u16(m, node->manufacturerId);
-        am->msg_put_u16(m, node->imageType());
-        am->msg_put_u32(m, node->softwareVersion());
-        am->msg_put_u16(m, (unsigned short)node->hardwareVersion());
-
-        if (node->hasData())
-        {
-            am->msg_put_u32(m, node->file.fileVersion);
-        }
-        else
-        {
-            am->msg_put_u32(m, 0);
-        }
-
-        am->send_message(m);
-    }
-#endif // USE_ACTOR_MODEL
-
-    // if (node->hasData() && node->rxOnWhenIdle)
-    // { // sleeping devices must be manually enabled
-    //     node->setPermitUpdate(true);
-    // }
 
     if (queryNextImageResponse(node))
     {
