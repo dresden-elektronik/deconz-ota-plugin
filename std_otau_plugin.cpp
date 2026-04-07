@@ -213,6 +213,84 @@ int am_plugin_init(struct am_api_functions *api)
 
 #endif // USE_ACTOR_MODEL
 
+static bool jsonGetLong(U_SStream obj, const char *key, long *value)
+{
+    if (0 == U_sstream_find(&obj, key) || 0 == U_sstream_find(&obj, ":"))
+        return false;
+
+    U_sstream_seek(&obj, obj.pos + 1);
+    *value = U_sstream_get_long(&obj);
+    return true;
+}
+
+static bool jsonGetU32(U_SStream obj, const char *key, uint32_t *value)
+{
+    long tmp;
+
+    if (jsonGetLong(obj, key, &tmp))
+    {
+        *value = tmp;
+        return true;
+    }
+
+    return false;
+}
+
+static bool jsonGetString(U_SStream skv, const char *key, char *str, unsigned maxlen)
+{
+    char keyQuoted[128];
+    unsigned keyLength = U_strlen(key);
+    Q_ASSERT(keyLength < sizeof(keyQuoted));
+    keyQuoted[0] = '"';
+    U_memcpy(&keyQuoted[1], key, keyLength);
+    keyQuoted[keyLength + 1] = '"';
+    keyQuoted[keyLength + 2] = '\0';
+
+    *str = '\0';
+    if (0 == U_sstream_find(&skv, keyQuoted) || 0 == U_sstream_find(&skv, ":") || 0 == U_sstream_find(&skv, "\""))
+        return false;
+
+    U_sstream_seek(&skv, skv.pos + 1);
+    U_sstream_skip_whitespace(&skv);
+
+    unsigned pos = skv.pos;
+    if (0 == U_sstream_find(&skv, "\""))
+        return false;
+
+    skv.len = skv.pos;
+    skv.pos = pos;
+
+    unsigned len = skv.len - skv.pos;
+    if (len >= maxlen)
+        return false;
+
+    U_memcpy(str, &skv.str[skv.pos], len);
+    str[len] = '\0';
+    return true;
+}
+
+static void U_sstream_put_hex_u16(U_SStream *ss, uint16_t value)
+{
+    const uint8_t b[2] = {
+        (uint8_t)((value >> 8) & 0xFF),
+        (uint8_t)(value & 0xff)
+    };
+
+    U_sstream_put_hex(ss, &b, 2);
+}
+
+static void U_sstream_put_hex_u32(U_SStream *ss, uint32_t value)
+{
+    const uint8_t b[4] = {
+        (uint8_t)((value >> 24) & 0xFF),
+        (uint8_t)((value >> 16) & 0xFF),
+        (uint8_t)((value >> 8) & 0xFF),
+        (uint8_t)(value & 0xff)
+    };
+
+    U_sstream_put_hex(ss, &b, 4);
+}
+
 /*! The constructor.
  */
 StdOtauPlugin::StdOtauPlugin(QObject *parent) :
@@ -250,19 +328,26 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
     connect(m_downloadTimer, SIGNAL(timeout()),
             this, SLOT(downloadTimerFired()));
 
-    //QString defaultImgPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau";
     QString defaultImgPath = deCONZ::getStorageLocation(deCONZ::HomeLocation) + "/otau";
     m_imgPath = deCONZ::appArgumentString("--otau-img-path", defaultImgPath);
 
     QDir otauDir(m_imgPath);
 
+    if (!otauDir.exists())
+    {
+        QString secondaryPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau";
+
+        otauDir = secondaryPath;
+        if (!otauDir.exists())
+            otauDir.mkdir(secondaryPath);
+
+        if (otauDir.exists())
+            m_imgPath = secondaryPath;
+    }
+
     if (otauDir.exists())
     {
         DBG_Printf(DBG_OTA, "OTAU: image path: %s\n", qPrintable(m_imgPath));
-    }
-    else
-    {
-        DBG_Printf(DBG_ERROR, "OTAU: image path does not exist: %s\n", qPrintable(m_imgPath));
     }
 
     deCONZ::ApsController *apsCtrl = deCONZ::ApsController::instance();
@@ -303,32 +388,13 @@ StdOtauPlugin::StdOtauPlugin(QObject *parent) :
 
     // Koenkk/zigbee-OTA repository is a well maintained source for OTA image files.
     // The index.json contains links to the files which are also mirrored on Github.
-    /*
-      [{
-        "fileName": "1135-0100-1000002A-Kobold.zigbee",
-        "fileVersion": 268435498,
-        "fileSize": 244094,
-        "url": "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/images/DresdenElektronik/1135-0100-1000002A-Kobold.zigbee",
-        "imageType": 256,
-        "manufacturerCode": 4405,
-        "sha512": "0905f0e6a469be3893f2c665156f18077258e24439e283c9f4b121553a94e8eb142e6250e721585ddd9aceef75da3c10a03defaee89885d7cb8f08449a20912d",
-        "otaHeaderString": "",
-        "originalUrl": "https://deconz.dresden-elektronik.de/otau/1135-0100-1000002A-Kobold.zigbee"
-      }, {...}]
-
-    */
     m_downloadIndexUrl = "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/refs/heads/master/index.json";
     if (config.contains("otau/online-url"))
     {
         m_downloadIndexUrl = config.value("otau/online-url", m_downloadIndexUrl).toString();
     }
 
-    if (m_downloadsEnabled)
-    {
-        m_downloadTimer->start(2000);
-    }
-
-    checkFileLinks();
+    createLocalFileIndex();
 }
 
 /*! APSDE-DATA.indication callback.
@@ -579,15 +645,11 @@ void StdOtauPlugin::nodeSelected(const deCONZ::Node *node)
 }
 
 /*! Checks if a new otau image for the node is available in the otau folder.
-    Otau images must be in the <otau> directory and must have a proper formatted filename.
-    All numbers are hexaecimal and in capital letters.
-    filename: <manufacturer code>-<imagetype>-<fileversion>-someArbitraryText.zigbee
-    example: 113D-AB12-1F010400-FLS-RGB.zigbee
+    Otau images must be in the <otau> directory.
 
     \param node - the node for which the check will be done
-    \param path - the path to look for .zigbee files
  */
-bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node, const QString &path)
+bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node)
 {
     deCONZ::ApsController *apsCtrl = deCONZ::ApsController::instance();
     if (!apsCtrl)
@@ -595,127 +657,81 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node, const QString &path
         return false;
     }
 
-    if (apsCtrl->getParameter(deCONZ::ParamOtauActive) == 0)
-    {
-        return false;
-    }
+    // if (apsCtrl->getParameter(deCONZ::ParamOtauActive) == 0)
+    // {
+    //     return false;
+    // }
 
+    QString updateFile;
     uint32_t cmpFileVersion = node->softwareVersion();
 
-    const QString otaIndexPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/ota_index.txt";
-
-    if (!QFile::exists(otaIndexPath))
+    if (!QFile::exists(m_localIndexPath))
         return false;
 
     {
-        QFile f(otaIndexPath);
+        QFile f(m_localIndexPath);
         if (!f.open(QFile::ReadOnly))
             return false;
 
-            for (;;)
+        for (;;)
+        {
+            QByteArray line = f.readLine().trimmed(); // one json object per line
+            if (line.size() <= 0)
+                break;
+
+            U_SStream ss;
+            U_sstream_init(&ss, line.data(), line.size());
+
+            if (U_sstream_peek_char(&ss) != '{')
+                continue;
+
+            uint32_t mfcode;
+            if (!jsonGetU32(ss, "manufacturerCode", &mfcode))
+                continue;
+
+            if (mfcode != node->manufacturerId)
+                continue;
+
+            uint32_t imageType;
+            if (!jsonGetU32(ss, "imageType", &imageType))
+                continue;
+
+            if (imageType != node->imageType())
+                continue;
+
+            uint32_t fileVersion;
+            if (!jsonGetU32(ss, "fileVersion", &fileVersion))
+                continue;
+
+            if (fileVersion <= cmpFileVersion)
+                continue;
+
             {
-                QByteArray line = f.readLine().trimmed();
-                if (line.size() <= 0)
+                char path[2048];
+                if (!jsonGetString(ss, "path", path, sizeof(path)))
+                    continue;
+
+                updateFile = path;
+                if (QFile::exists(updateFile))
                     break;
 
-                U_SStream ss;
-                U_sstream_init(&ss, line.data(), line.size());
-
-                long mfcode = U_sstream_get_long(&ss);
-
-                if (mfcode != node->manufacturerId)
-                    continue;
-
-                long imageType = U_sstream_get_long(&ss);
-                if (imageType != node->imageType())
-                    continue;
-
-                long version = U_sstream_get_long(&ss);
-
-                if (ss.status != U_SSTREAM_OK)
-                    continue;
-
-
-
+                updateFile = {};
             }
-    }
 
-    bool ok;
-
-    uint32_t fileVersion;
-    uint16_t imageType;
-    uint16_t manufacturerId;
-    QString updateFile = "";
-    QDir dir(path);
-
-    if (!dir.exists())
-    {
-        DBG_Printf(DBG_OTA, "OTAU: image path does not exist: %s\n", qPrintable(path));
-        return false;
-    }
-
-    QStringList ls = dir.entryList();
-
-    auto i = ls.begin();
-    auto end = ls.end();
-
-    for (; i != end; ++i)
-    {
-        if (!i->endsWith(".zigbee"))
-        {
-            continue;
-        }
-
-        QString plain = *i;
-        plain.replace(".zigbee", "");
-
-        QStringList args = plain.split('-');
-
-        if (args.size() >= 3)
-        {
-            manufacturerId = args[0].toUShort(&ok, 16);
-
-            if (!ok || manufacturerId != node->manufacturerId)
-            {
+            if (ss.status != U_SSTREAM_OK)
                 continue;
-            }
-
-            imageType = args[1].toUShort(&ok, 16);
-
-            if (!ok)
-            {
-                continue;
-            }
-
-            if (imageType == node->imageType())
-            {
-                fileVersion = args[2].toUInt(&ok, 16);
-
-                if (!ok)
-                {
-                    continue;
-                }
-
-                if (fileVersion > cmpFileVersion)
-                {
-                    updateFile = *i;
-                    cmpFileVersion = fileVersion;
-                    DBG_Printf(DBG_OTA, "OTAU: Match otau version 0x%08X image type 0x%04X\n", fileVersion, imageType);
-                }
-            }
-
         }
     }
 
     if (!updateFile.isEmpty())
     {
-        updateFile.prepend(path + "/");
         OtauFileLoader ld;
 
         if (ld.readFile(updateFile, node->file))
         {
             node->setHasData(true);
             DBG_Printf(DBG_OTA, "OTAU: found update file %s\n", qPrintable(updateFile));
+            return true;
         }
         else
         {
@@ -874,45 +890,80 @@ void StdOtauPlugin::activityTimerFired()
     }
 }
 
+void StdOtauPlugin::downloadCancelOrError()
+{
+    m_downloadState = DownloadStateInitial;
+}
+
 static void downloadIndexCallback(N_DownloadData *dd)
 {
     StdOtauPlugin *q = static_cast<StdOtauPlugin*>(dd->user);
     if (dd->status == N_DownloadDone)
     {
-        q->onDownloadedIndex(dd->data, dd->data_size);
+        q->downloadedStoreIndex(dd->data, dd->data_size);
     }
     else
     {
-        DBG_Printf(DBG_ERROR, "OTAU: error downloading index file (%d)\n", (int)dd->status);
+        DBG_Printf(DBG_ERROR, "OTAU: error downloading index file. status: %d\n", (int)dd->status);
+        q->downloadCancelOrError();
+    }
+}
+
+static void downloadOtaFileCallback(N_DownloadData *dd)
+{
+    StdOtauPlugin *q = static_cast<StdOtauPlugin*>(dd->user);
+    if (dd->status == N_DownloadDone)
+    {
+        q->downloadedStoreOtaFile(dd->data, dd->data_size);
+    }
+    else
+    {
+        DBG_Printf(DBG_ERROR, "OTAU: error downloading index file. status: %d\n", (int)dd->status);
+        // let run into timeout and proceed
     }
 }
 
 void StdOtauPlugin::downloadTimerFired()
 {
-    if (m_downloadState == DownloadStateInitial)
+    if (m_downloadState == DownloadStateRequestIndex)
     {
         if (!m_downloadsEnabled)
+        {
+            downloadCancelOrError();
             return;
+        }
 
         if (m_downloadIndexUrl.size() == 0)
+        {
+            downloadCancelOrError();
             return;
+        }
 
         m_downloadIndexPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/ota_remote_index.json";
-        if (QFile::exists(m_downloadIndexPath))
+
+        auto now = deCONZ::steadyTimeRef();
+        bool indexExists = QFile::exists(m_downloadIndexPath);
+        bool needRefresh = (!indexExists || !isValid(m_downloadIndexAge) || deCONZ::TimeSeconds{30 * 60} < (now - m_downloadIndexAge));
+
+        if (needRefresh)
         {
-            QFile::remove(m_downloadIndexPath);
+            unsigned maxFileSize = 1 << 21; // 2 MB, should be plenty enough
+            m_downloadHandle = N_Download(qPrintable(m_downloadIndexUrl), maxFileSize, downloadIndexCallback, this);
+            m_downloadState = DownloadStateWaitIndexResponse;
+            m_downloadTimer->start(20000);
         }
-        unsigned maxFileSize = 1 << 21; // 2 MB, should be plenty enough
-        m_downloadHandle = N_Download(qPrintable(m_downloadIndexUrl), maxFileSize, downloadIndexCallback, this);
-        m_downloadState = DownloadStateLoadIndex;
-        m_downloadTimer->start(20000);
+        else
+        {
+            m_downloadState = DownloadStateProcessIndex;
+            m_downloadTimer->start(50);
+        }
     }
-    else if (m_downloadState == DownloadStateLoadIndex)
+    else if (m_downloadState == DownloadStateWaitIndexResponse)
     {
         DBG_Printf(DBG_ERROR, "OTAU: failed to download OTA index\n");
-        m_downloadState = DownloadStateInitial;
+        downloadCancelOrError();
     }
-    else if (m_downloadState == DownloadStateIdle)
+    else if (m_downloadState == DownloadStateProcessIndex)
     {
         struct KOP
         {
@@ -929,9 +980,11 @@ void StdOtauPlugin::downloadTimerFired()
             auto i = m_model->nodes().cbegin();
             const auto iend = m_model->nodes().cend();
 
-
             for (; i != iend; ++i)
             {
+                if ((*i)->manufacturerId == 0)
+                    continue;
+
                 auto j = known.cbegin();
                 const auto jend = known.cend();
 
@@ -957,7 +1010,7 @@ void StdOtauPlugin::downloadTimerFired()
 
         if (known.empty())
         {
-            // TODO check later?
+            downloadCancelOrError();
             return;
         }
 
@@ -977,11 +1030,25 @@ void StdOtauPlugin::downloadTimerFired()
         U_SStream ss;
         U_sstream_init(&ss, data.data(), data.size());
 
+        /*
+      [{
+        "fileName": "1135-0100-1000002A-Kobold.zigbee",
+        "fileVersion": 268435498,
+        "fileSize": 244094,
+        "url": "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/images/DresdenElektronik/1135-0100-1000002A-Kobold.zigbee",
+        "imageType": 256,
+        "manufacturerCode": 4405,
+        "sha512": "0905f0e6a469be3893f2c665156f18077258e24439e283c9f4b121553a94e8eb142e6250e721585ddd9aceef75da3c10a03defaee89885d7cb8f08449a20912d",
+        "otaHeaderString": "",
+        "originalUrl": "https://deconz.dresden-elektronik.de/otau/1135-0100-1000002A-Kobold.zigbee"
+      }, {...}]
+        */
+
         for (;U_sstream_find(&ss, "{");)
         {
-            unsigned manufacturerCode;
-            unsigned imageType;
-            unsigned fileVersion;
+            uint32_t manufacturerCode;
+            uint32_t imageType;
+            uint32_t fileVersion;
 
             U_SStream so = ss; // stream limited to one object
             if (U_sstream_find(&so, "}"))
@@ -996,33 +1063,14 @@ void StdOtauPlugin::downloadTimerFired()
                 break; // invalid json
             }
 
-            U_SStream skv; // stream to extract values
-
-            skv = so;
-            if (0 == U_sstream_find(&skv, "manufacturerCode") || 0 == U_sstream_find(&skv, ":"))
+            if (!jsonGetU32(so, "manufacturerCode", &manufacturerCode))
                 continue;
-            U_sstream_seek(&skv, skv.pos + 1);
-            manufacturerCode = U_sstream_get_long(&skv);
 
-            skv = so;
-            if (0 == U_sstream_find(&skv, "imageType") || 0 == U_sstream_find(&skv, ":"))
+            if (!jsonGetU32(so, "imageType", &imageType))
                 continue;
-            U_sstream_seek(&skv, skv.pos + 1);
-            imageType = U_sstream_get_long(&skv);
 
-            skv = so;
-            if (0 == U_sstream_find(&skv, "fileVersion") || 0 == U_sstream_find(&skv, ":"))
+            if (!jsonGetU32(so, "fileVersion", &fileVersion))
                 continue;
-            U_sstream_seek(&skv, skv.pos + 1);
-            fileVersion = U_sstream_get_long(&skv);
-
-            struct DownloadOtaFile
-            {
-                uint16_t manufacturerCode;
-                uint16_t imageType;
-                uint32_t fileVersion;
-                char url[512];
-            };
 
             auto j = known.cbegin();
             const auto jend = known.cend();
@@ -1032,66 +1080,188 @@ void StdOtauPlugin::downloadTimerFired()
                 if (j->manufacturerCode == manufacturerCode && j->imageType == imageType)
                 {
                     DownloadOtaFile dlota;
+                    char valbuf[1280];
 
                     dlota.manufacturerCode = manufacturerCode;
                     dlota.imageType = imageType;
 
-                    // URL
-                    skv = so;
-                    if (0 == U_sstream_find(&skv, "\"url\"") || 0 == U_sstream_find(&skv, ":") || 0 == U_sstream_find(&skv, "\""))
+                    if (!jsonGetString(so, "url", valbuf, sizeof(valbuf)))
                         continue;
-                    U_sstream_seek(&skv, skv.pos + 1);
-                    U_sstream_skip_whitespace(&skv);
 
-                    unsigned pos = skv.pos;
-                    if (0 == U_sstream_find(&skv, "\""))
-                        break;
+                    dlota.url = valbuf;
 
-                    skv.len = skv.pos;
-                    skv.pos = pos;
+                    if (!jsonGetString(so, "sha512", valbuf, sizeof(valbuf)))
+                        continue;
 
-                    unsigned len = skv.len - skv.pos;
-                    if (len >= sizeof(dlota.url))
-                        break;
+                    if (U_strlen(valbuf) != 128)
+                        continue;
 
-                    U_memcpy(dlota.url, &skv.str[skv.pos], len);
-                    dlota.url[len] = '\0';
+                    dlota.sha512 = valbuf;
 
-                    DBG_Printf(DBG_OTA, "OTAU: download %04X-%04X-%08X from %s\n", manufacturerCode, imageType, fileVersion, dlota.url);
+                    { // check if we already have this file
+                        bool found = false;
+                        QFile f(m_localIndexPath);
+                        auto needle = QByteArray::fromRawData(valbuf, 128); // sha512
+
+                        if (f.open(QFile::ReadOnly))
+                        {
+                            for (;;)
+                            {
+                                QByteArray line = f.readLine().trimmed(); // one json object per line
+                                if (line.size() <= 0)
+                                    break;
+
+                                if (line.contains(needle))
+                                {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (found) // don't need to download twice
+                            break;
+                    }
+
+                    U_SStream fname;
+                    U_sstream_init(&fname, valbuf, sizeof(valbuf));
+
+                    U_sstream_put_hex_u16(&fname, manufacturerCode);
+                    U_sstream_put_str(&fname, "-");
+                    U_sstream_put_hex_u16(&fname, imageType);
+                    U_sstream_put_str(&fname, "-");
+                    U_sstream_put_hex_u32(&fname, fileVersion);
+                    U_sstream_put_str(&fname, "-");
+                    for (int v = 0; v < 6; v++)
+                        fname.str[fname.pos++] = dlota.sha512.c_str()[v];
+
+                    fname.str[fname.pos] = '\0';
+                    U_sstream_put_str(&fname, ".zigbee");
+                    dlota.fileName = fname.str;
+
+                    bool found = false;
+                    for (const auto &dl : m_downloads)
+                    {
+                        if (dl.sha512 == dlota.sha512)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        m_downloads.push_back(dlota);
+                        DBG_Printf(DBG_OTA, "OTAU: download %s from %s\n", dlota.fileName.c_str(), dlota.url.c_str());
+                    }
                     break;
                 }
             }
         }
+
+        if (!m_downloads.empty())
+        {
+            m_downloadState = DownloadStateRequestOtaFile;
+            m_downloadTimer->start(50);
+        }
+    }
+    else if (m_downloadState == DownloadStateRequestOtaFile)
+    {
+        if (m_downloads.empty())
+        {
+            downloadCancelOrError();
+            return;
+        }
+        DownloadOtaFile &dl = m_downloads.front();
+        if (dl.retry < 2)
+        {
+            unsigned maxFileSize = 1 << 21; // 2 MB, should be plenty enough
+            dl.retry++;
+            m_downloadHandle = N_Download(dl.url.c_str(), maxFileSize, downloadOtaFileCallback, this);
+            m_downloadState = DownloadStateWaitOtaFileResponse;
+            m_downloadTimer->start(20000);
+        }
+        else
+        {
+            m_downloads.front() = m_downloads.back();
+            m_downloads.pop_back();
+            m_downloadTimer->start(100);
+        }
+    }
+    else if (m_downloadState == DownloadStateWaitOtaFileResponse)
+    {
+        m_downloadState = DownloadStateRequestOtaFile;
+        m_downloadTimer->start(100);
     }
 }
 
-void StdOtauPlugin::onDownloadedIndex(const uint8_t *data, unsigned int size)
+void StdOtauPlugin::downloadedStoreIndex(const uint8_t *data, unsigned int size)
 {
     bool ok = false;
 
-    if (m_downloadState != DownloadStateLoadIndex)
+    if (m_downloadState != DownloadStateWaitIndexResponse)
         return; // should not happen
 
     if (data && 512 < size)
     {
+        if (QFile::exists(m_downloadIndexPath))
+            QFile::remove(m_downloadIndexPath);
+
         DBG_Printf(DBG_OTA, "OTAU: downloaded index file: %u kB\n", size / 1000);
         QFile f(m_downloadIndexPath);
         if (f.open(QFile::ReadWrite))
         {
-            f.write((const char*)data, size);
+            auto n = f.write((const char*)data, size);
             f.close();
-            ok = true;
-            broadcastImageNotify();
-            m_downloadTimer->stop();
-            m_downloadState = DownloadStateIdle;
-            m_downloadTimer->start(50);
+
+            if (n == size)
+            {
+                ok = true;
+                m_downloadState = DownloadStateProcessIndex;
+                m_downloadTimer->start(50);
+            }
         }        
     }
 
     if (!ok)
     {
-        m_downloadState = DownloadStateInitial;
+        downloadCancelOrError();
     }
+}
+
+void StdOtauPlugin::downloadedStoreOtaFile(const uint8_t *data, unsigned int size)
+{
+    if (m_downloadState != DownloadStateWaitOtaFileResponse)
+        return; // should not happen
+
+    if (m_downloads.empty())
+        return; // should not happen
+
+    DownloadOtaFile dl = m_downloads.front();
+    m_downloads.front() = m_downloads.back();
+    m_downloads.pop_back();
+
+    QString filePath = m_imgPath + "/" + dl.fileName.c_str();
+
+    if (data && 512 < size)
+    {
+        if (QFile::exists(filePath))
+            QFile::remove(filePath);
+
+        DBG_Printf(DBG_OTA, "OTAU: downloaded %s: %u kB\n", dl.fileName.c_str(), size / 1000);
+        QFile f(filePath);
+        if (f.open(QFile::ReadWrite))
+        {
+            f.write((const char*)data, size);
+            f.close();
+        }
+    }
+
+    createLocalFileIndex();
+
+    // proceed with next (or finish)
+    m_downloadState = DownloadStateRequestOtaFile;
+    m_downloadTimer->start(50);
 }
 
 void StdOtauPlugin::markOtauActivity(const deCONZ::Address &address)
@@ -1134,22 +1304,33 @@ struct OtaIndexEntry
     uint32_t fileSize;
 };
 
-void StdOtauPlugin::checkFileLinks()
+void StdOtauPlugin::createLocalFileIndex()
 {
-    bool ok;
     QStringList paths;
-    paths.append(m_imgPath);
-    //paths.append(deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau");
 
-    QString otaIndexPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/ota_index.txt";
-
-    if (QFile::exists(otaIndexPath))
     {
-        QFile::remove(otaIndexPath);
+        QString defaultImgPath = deCONZ::getStorageLocation(deCONZ::HomeLocation) + "/otau";
+        defaultImgPath = deCONZ::appArgumentString("--otau-img-path", defaultImgPath);
+
+        QDir otauDir(defaultImgPath);
+
+        if (otauDir.exists())
+            paths.append(defaultImgPath);
+
+        QString secondaryPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau";
+        otauDir = secondaryPath;
+        if (otauDir.exists())
+            paths.append(secondaryPath);
+    }
+
+    m_localIndexPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/ota_index.json";
+
+    if (QFile::exists(m_localIndexPath))
+    {
+        QFile::remove(m_localIndexPath);
     }
 
     std::vector<OtaIndexEntry> otaEntries;
-    OtaIndexEntry otaEntry;
 
     for (const QString &path : paths)
     {
@@ -1176,11 +1357,7 @@ void StdOtauPlugin::checkFileLinks()
             if (!of.fromArray(arr))
                 continue;
 
-            const QString fname = QString("%1-%2-%3").arg(of.manufacturerCode, 4, 16, QLatin1Char('0'))
-                                                     .arg(of.imageType, 4, 16, QLatin1Char('0'))
-                                                     .arg(of.fileVersion, 8, 16, QLatin1Char('0'))
-                                                     .toUpper();
-
+            OtaIndexEntry otaEntry;
             otaEntry.path = (path + "/" + n);
             otaEntry.mfcode = of.manufacturerCode;
             otaEntry.imagetype = of.imageType;
@@ -1189,41 +1366,25 @@ void StdOtauPlugin::checkFileLinks()
             U_memset(otaEntry.sha512, 0, sizeof(otaEntry.sha512));
             U_Sha512(arr.constData(), arr.size(), &otaEntry.sha512[0]);
 
-            ok = false;
+            bool found = false;
             for (const OtaIndexEntry &e : otaEntries)
             {
                 if (U_memcmp(e.sha512, otaEntry.sha512, sizeof(e.sha512)) == 0)
                 {
-                    ok = true;
+                    found = true;
                     break;
                 }
             }
 
-            if (!ok)
+            if (!found)
             {
                 otaEntries.push_back(otaEntry);
             }
-
-            ok = false;
-            for (const QString &n2 : ls)
-            {
-                if (n2.startsWith(fname))
-                {
-                    ok = true;
-                    break;
-                }
-            }
-
-            if (ok)
-                continue;
-
-            DBG_Printf(DBG_INFO, "OTAU: create %s.zigbee\n", qPrintable(fname));
-            file.copy(path + "/" + fname + ".zigbee");
         }
     }
 
     {
-        QFile otaIndexFile(otaIndexPath);
+        QFile otaIndexFile(m_localIndexPath);
         if (otaIndexFile.open(QFile::ReadWrite))
         {
             int count = 0;
@@ -1231,16 +1392,33 @@ void StdOtauPlugin::checkFileLinks()
             stream << "[\n";
             for (const OtaIndexEntry &e : otaEntries)
             {
+                char sha512Ascii[128 + 8];
+
+                {
+                    U_SStream ssha;
+                    U_sstream_init(&ssha, sha512Ascii, sizeof(sha512Ascii));
+                    U_sstream_put_hex(&ssha, e.sha512, 64);
+                    for (unsigned i = 0; i < ssha.pos; i++) // to lower
+                    {
+                        char ch = ssha.str[i];
+                        if (ch >= 'A' && ch <= 'Z')
+                            ch += (char)('a' - 'A');
+                        ssha.str[i] = ch;
+                    }
+                }
+
                 if (count)
                     stream << ",\n";
 
-                stream << "  {\n";
-                stream << "    \"fileVersion\": " << e.fileVersion << ",\n";
-                stream << "    \"fileSize\": " << e.fileSize << ",\n";
-                stream << "    \"manufacturerCode\": " << e.mfcode << ",\n";
-                stream << "    \"imageType\": " << e.imagetype << ",\n";
-                stream << "    \"url\": \"" << e.path << "\"\n";
-                stream << "  }";
+                // Important: one minified object per line (the parser expects exactly this)
+                stream << "{";
+                stream << "\"fileVersion\":" << e.fileVersion << ",";
+                stream << "\"fileSize\":" << e.fileSize << ",";
+                stream << "\"manufacturerCode\":" << e.mfcode << ",";
+                stream << "\"imageType\":" << e.imagetype << ",";
+                stream << "\"sha512\":\"" << sha512Ascii << "\",";
+                stream << "\"path\":\"" << e.path << "\"";
+                stream << "}";
                 count++;
             }
 
@@ -1252,10 +1430,11 @@ void StdOtauPlugin::checkFileLinks()
 }
 
 /*! Executed when check online button is clicked */
-void StdOtauPlugin::downloadOtaFiles()
+void StdOtauPlugin::downloadRequestIndex()
 {
     if (m_downloadState == DownloadStateInitial)
     {
+        m_downloadState = DownloadStateRequestIndex;
         m_downloadsEnabled = true;
         m_downloadTimer->start(10);
 
@@ -1548,7 +1727,7 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     node->setAddress(ind.srcAddress());
     node->refreshTimeout();
     node->restartElapsedTimer();
-    node->setStatus(OtauNode::StatusSuccess);
+    node->setStatus(OtauNode::StatusImageRequest);
 
     QDataStream stream(zclFrame.payload());
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -1574,23 +1753,17 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     DBG_Printf(DBG_OTA, "OTAU: query next img req: " FMT_MAC " mfCode: 0x%04X, img type: 0x%04X, sw version: 0x%08X\n",
                FMT_MAC_CAST(ind.srcAddress().ext()), node->manufacturerId, node->imageType(), node->softwareVersion());
 
-    if (deCONZ::ApsController::instance()->getParameter(deCONZ::ParamOtauActive) != 0)
+    // if (deCONZ::ApsController::instance()->getParameter(deCONZ::ParamOtauActive) != 0)
     {
         // check for image
         if (!node->hasData() && m_otauTracker.size() < OTAU_MAX_ACTIVE)
         {
             node->file.subElements.clear();
             node->setHasData(false);
-            node->setPermitUpdate(false);
+            //node->setPermitUpdate(false);
 
-            if (!checkForUpdateImageImage(node, m_imgPath))
+            if (!checkForUpdateImageImage(node))
             {
-                QString secondaryPath = deCONZ::getStorageLocation(deCONZ::ApplicationsDataLocation) + "/otau";
-
-                if (!checkForUpdateImageImage(node, secondaryPath))
-                {
-
-                }
             }
         }
     }
@@ -1625,10 +1798,10 @@ void StdOtauPlugin::queryNextImageRequest(const deCONZ::ApsDataIndication &ind, 
     }
 #endif // USE_ACTOR_MODEL
 
-    if (node->hasData() && node->rxOnWhenIdle)
-    { // sleeping devices must be manually enabled
-        node->setPermitUpdate(true);
-    }
+    // if (node->hasData() && node->rxOnWhenIdle)
+    // { // sleeping devices must be manually enabled
+    //     node->setPermitUpdate(true);
+    // }
 
     if (queryNextImageResponse(node))
     {
@@ -1778,7 +1951,7 @@ void StdOtauPlugin::imageBlockRequest(const deCONZ::ApsDataIndication &ind, cons
         node->imgBlockReq.fileVersion = node->file.fileVersion;
     }
 
-    node->setStatus(OtauNode::StatusSuccess);
+    node->setStatus(OtauNode::StatusUploading);
     node->setOffset(node->imgBlockReq.offset);
     node->setImageType(node->imgBlockReq.imageType);
     node->notifyElapsedTimer();
@@ -2193,6 +2366,7 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
     DBG_Printf(DBG_OTA, "OTAU: upgrade end req: status: 0x%02X, fwVersion:0x%08X, imgType: 0x%04X\n", node->upgradeEndReq.status, node->upgradeEndReq.fileVersion, node->upgradeEndReq.imageType);
 
     node->setState(OtauNode::NodeIdle);
+    node->setStatus(OtauNode::StatusUpgradeEnd);
 
     if (node->upgradeEndReq.status == OTAU_SUCCESS)
     {
@@ -2205,7 +2379,6 @@ void StdOtauPlugin::upgradeEndRequest(const deCONZ::ApsDataIndication &ind, cons
             return;
         }
 
-        node->setStatus(OtauNode::StatusWaitUpgradeEnd);
         node->setOffset(node->file.totalImageSize); // mark done
 
         node->file.subElements.clear();
@@ -2293,10 +2466,6 @@ bool StdOtauPlugin::upgradeEndResponse(OtauNode *node, uint32_t upgradeTime)
     {
         node->apsRequestId = req.id();
         node->zclCommandId = zclFrame.commandId();
-        if (upgradeTime < OTA_TIME_INFINITE)
-        {
-            node->setStatus(OtauNode::StatusSuccess);
-        }
         ret = true;
     }
 
@@ -2383,7 +2552,7 @@ QWidget *StdOtauPlugin::createWidget()
     {
         m_w = new StdOtauWidget(nullptr);
 
-        connect(m_w, &StdOtauWidget::checkOnlineOtaFiles, this, &StdOtauPlugin::downloadOtaFiles);
+        connect(m_w, &StdOtauWidget::checkOnlineOtaFiles, this, &StdOtauPlugin::downloadRequestIndex);
 
         connect(m_w, SIGNAL(unicastImageNotify(deCONZ::Address)),
                 this, SLOT(unicastImageNotify(deCONZ::Address)));

@@ -96,16 +96,18 @@ public Q_SLOTS:
     bool defaultResponse(OtauNode *node, quint8 commandId, quint8 status);
     void nodeEvent(const deCONZ::NodeEvent &event);
     void nodeSelected(const deCONZ::Node *node);
-    bool checkForUpdateImageImage(OtauNode *node, const QString &path);
+    bool checkForUpdateImageImage(OtauNode *node);
     void invalidateUpdateEndRequest(OtauNode *node);
     void imagePageTimerFired();
     void cleanupTimerFired();
     void activityTimerFired();
+    void downloadCancelOrError();
     void downloadTimerFired();
-    void onDownloadedIndex(const uint8_t *data, unsigned size);
+    void downloadRequestIndex();
+    void downloadedStoreIndex(const uint8_t *data, unsigned size);
+    void downloadedStoreOtaFile(const uint8_t *data, unsigned size);
     void markOtauActivity(const deCONZ::Address &address);
-    void checkFileLinks();
-    void downloadOtaFiles();
+    void createLocalFileIndex();
 
 Q_SIGNALS:
     void stateChanged(int state);
@@ -114,8 +116,22 @@ private:
     enum DownloadState
     {
         DownloadStateInitial,
-        DownloadStateLoadIndex,
-        DownloadStateIdle,
+        DownloadStateRequestIndex,
+        DownloadStateWaitIndexResponse,
+        DownloadStateProcessIndex,
+        DownloadStateRequestOtaFile,
+        DownloadStateWaitOtaFileResponse
+    };
+
+    struct DownloadOtaFile
+    {
+        int retry = 0;
+        uint16_t manufacturerCode;
+        uint16_t imageType;
+        uint32_t fileVersion;
+        std::string fileName;
+        std::string sha512;
+        std::string url;
     };
 
     void setState(State state);
@@ -125,6 +141,7 @@ private:
     QString m_downloadIndexUrl;
     deCONZ::Address m_delayedImageNotifyAddr;
     QString m_imgPath;
+    QString m_localIndexPath;
     OtauModel *m_model;
     State m_state;
     quint8 m_srcEndpoint;
@@ -136,9 +153,11 @@ private:
     QTimer *m_cleanupTimer;
     QTimer *m_activityTimer;
     QTimer *m_downloadTimer;
+    deCONZ::SteadyTimeRef m_downloadIndexAge = {};
     int m_downloadHandle = 0;
     QString m_downloadIndexPath;
     DownloadState m_downloadState = DownloadStateInitial;
+    std::vector<DownloadOtaFile> m_downloads;
     std::vector<OtauTracker> m_otauTracker;
     int m_fastPageSpaceing;
 };

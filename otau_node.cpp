@@ -168,7 +168,7 @@ QString OtauNode::statusString() const
     case StatusTimeout: return "Timeout";
     case StatusIgnored: return "Ignored";
     case StatusCrcError: return "CrCError";
-    case StatusWaitUpgradeEnd: return "WaitUpgradeEnd";
+    case StatusUpgradeEnd: return "WaitUpgradeEnd";
     default:
         break;
     }
