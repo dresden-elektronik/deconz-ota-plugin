@@ -121,11 +121,7 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             break;
 
         case SectionProgress:
-            if (node->status() == OtauNode::StatusWaitUpgradeEnd)
-            {
-                str = tr("Wait to finish");
-            }
-            else if (node->zclCommandId == OTAU_UPGRADE_END_RESPONSE_CMD_ID)
+            if (node->status() == OtauNode::StatusUpgradeEnd)
             {
                 switch(node->upgradeEndReq.status)
                 {
@@ -138,18 +134,7 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
                     break;
                 }
             }
-            else if (node->zclCommandId == OTAU_QUERY_NEXT_IMAGE_RESPONSE_CMD_ID)
-            {
-                if (node->hasData())
-                {
-                    str = tr("Idle");
-                }
-                else
-                {
-                    str = tr("No file");
-                }
-            }
-            else if (node->permitUpdate())
+            else if (node->status() == OtauNode::StatusUploading)
             {
                 if (node->offset() > 0)
                 {
@@ -167,9 +152,23 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
                     str = tr("Queued");
                 }
             }
-            else if (node->hasData())
+            else if (node->status() == OtauNode::StatusImageRequest || node->hasData())
             {
-                str = tr("Paused");
+                if (node->hasData())
+                {
+                    if (node->permitUpdate())
+                    {
+                        str = tr("Queued");
+                    }
+                    else
+                    {
+                        str = tr("Update available");
+                    }
+                }
+                else
+                {
+                    str = tr("No file");
+                }
             }
             else
             {
@@ -184,10 +183,6 @@ QVariant OtauModel::data(const QModelIndex &index, int role) const
             str = QString("%1:%2").arg(min).arg(sec, 2, 10, QLatin1Char('0'));
         }
             break;
-
-//        case SectionStatus:
-//            str = node->statusString();
-//            break;
 
         default:
             break;

@@ -32,6 +32,7 @@ public Q_SLOTS:
     void clearSettingsBox();
     void updateSettingsBox();
     void otauTableActivated(const QModelIndex &index);
+    void advancedToggled();
 
     // OTAU upgrade
     void queryClicked();
@@ -57,6 +58,7 @@ Q_SIGNALS:
     void activatedNodeAtRow(int);
     void unicastImageNotify(deCONZ::Address);
     void unicastUpgradeEndRequest(deCONZ::Address);
+    void checkOnlineOtaFiles();
 
 private:
     void updateEditor();

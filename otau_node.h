@@ -86,7 +86,9 @@ public:
         StatusTimeout            = 0x08,
         StatusIgnored            = 0x09,
         StatusCrcError           = 0x0A,
-        StatusWaitUpgradeEnd     = 0x0B
+        StatusUpgradeEnd     = 0x0B,
+        StatusUploading          = 0x0C,
+        StatusImageRequest       = 0x0D
     };
 
     OtauNode(const deCONZ::Address &addr);
