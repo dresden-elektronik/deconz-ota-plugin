@@ -715,7 +715,7 @@ bool StdOtauPlugin::checkForUpdateImageImage(OtauNode *node)
                 if (QFile::exists(updateFile))
                     break;
 
-                updateFile = {};
+                updateFile = QString();
             }
 
             if (ss.status != U_SSTREAM_OK)
