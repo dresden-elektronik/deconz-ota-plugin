@@ -209,7 +209,7 @@ void StdOtauWidget::fileSelectClicked()
         QString path = QFileDialog::getOpenFileName(this,
                                                     "Select a firmware file",
                                                     dirpath,
-                                                    "Firmware (*.zigbee *.ota.signed *.ota *.fw2 *.sbl-ota)");
+                                                    "Firmware (*.zigbee *.ota.signed *.ota *.fw *.fw2 *.sbl-ota)");
         if (path.isEmpty())
         {
             clearSettingsBox();
@@ -403,7 +403,7 @@ void StdOtauWidget::openClicked()
     m_path = QFileDialog::getOpenFileName(this,
                                      tr("Select a firmware file"),
                                      path,
-                                     "Firmware (*.GCF *.bin *.zigbee *.ota.signed *.ota *.OTA *.fw2 *.sbl-ota)");
+                                     "Firmware (*.GCF *.bin *.zigbee *.ota.signed *.ota *.OTA *.fw *.fw2 *.sbl-ota)");
 
     if (!m_path.isEmpty())
     {
